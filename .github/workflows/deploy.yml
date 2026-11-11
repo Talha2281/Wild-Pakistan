@@ -44,3 +44,32 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  shots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Tools
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git xvfb libgl1-mesa-dri libglx-mesa0 libegl1 mesa-utils > /dev/null 2>&1 || true
+      - uses: actions/checkout@v4
+      - name: Import project
+        run: godot --headless --import || true
+      - name: Render screenshots
+        run: |
+          mkdir -p /tmp/shots
+          SHOT_DIR=/tmp/shots timeout 300 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 --resolution 1280x720 -s tests/shots.gd 2>&1 | tail -60 | tee /tmp/shots/log.txt || true
+      - name: Publish screenshots branch
+        run: |
+          cd /tmp/shots
+          git init -q -b shots
+          git config user.name ci
+          git config user.email ci@example.com
+          git add -A
+          git commit -q -m "screenshots"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git push -f origin shots
