@@ -12,6 +12,7 @@ extends SceneTree
 const FRAMES := 240
 
 var failures := 0
+var _gs: Node
 
 
 func _initialize() -> void:
@@ -19,6 +20,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_gs = root.get_node("GameState")
 	_check_sounds()
 	_check_models()
 	for biome in Biomes.ORDER:
@@ -60,15 +62,15 @@ func _check_models() -> void:
 
 func _test_level(biome: String, animal: String) -> void:
 	print("--- %s / %s" % [biome, animal])
-	GameState.animal_id = animal
-	GameState.biome_id = biome
+	_gs.animal_id = animal
+	_gs.biome_id = biome
 	var scene: PackedScene = load("res://scenes/game.tscn")
 	var level := scene.instantiate()
 	root.add_child(level)
 	await process_frame
 	await process_frame
 
-	var player := GameState.player as PlayerAnimal
+	var player := _gs.player as PlayerAnimal
 	if player == null:
 		_fail("%s/%s: no player" % [biome, animal])
 		level.queue_free()
@@ -115,7 +117,7 @@ func _test_level(biome: String, animal: String) -> void:
 	await process_frame
 	level.queue_free()
 	await process_frame
-	GameState.terrain = null
+	_gs.terrain = null
 
 
 func _poke_interactables(player: PlayerAnimal) -> void:
