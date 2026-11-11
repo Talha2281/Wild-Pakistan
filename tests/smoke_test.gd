@@ -124,7 +124,7 @@ func _poke_interactables(player: PlayerAnimal) -> void:
 		var it := n as Interactable
 		if it == null:
 			continue
-		var key := it.get_script().resource_path
+		var key: String = it.get_script().resource_path
 		if seen.has(key):
 			continue
 		seen[key] = true
