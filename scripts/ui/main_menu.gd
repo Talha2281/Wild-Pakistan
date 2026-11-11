@@ -8,6 +8,9 @@ var _sel_animal := "chinkara"
 var _sel_skin := 0
 var _sel_biome := "thar"
 var _pivot: Node3D
+var _far: Polygon2D
+var _near: Polygon2D
+var _time := 0.0
 
 
 func _ready() -> void:
@@ -26,10 +29,15 @@ func _ready() -> void:
 
 	AudioManager.start_ambience("amb_desert")
 	AudioManager.set_environment(0.15, 0.0, 0.0)
+	AudioManager.play_music("music_menu", -9.0)
 	_show_main()
 
 
 func _process(delta: float) -> void:
+	_time += delta
+	if _far != null:
+		_far.position.x = sin(_time * 0.12) * 40.0
+		_near.position.x = sin(_time * 0.2 + 1.0) * 70.0
 	if _pivot != null and is_instance_valid(_pivot):
 		_pivot.rotation.y += delta * 0.6
 
@@ -55,13 +63,31 @@ func _build_background() -> void:
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var far := Polygon2D.new()
+	_far = far
 	far.color = Color(0.22, 0.25, 0.36)
 	far.polygon = PackedVector2Array([Vector2(-400, 720), Vector2(-400, 520), Vector2(80, 420), Vector2(260, 500), Vector2(520, 330), Vector2(760, 470), Vector2(980, 380), Vector2(1250, 500), Vector2(1680, 400), Vector2(1680, 720)])
 	add_child(far)
 	var near := Polygon2D.new()
+	_near = near
 	near.color = Color(0.12, 0.1, 0.1)
 	near.polygon = PackedVector2Array([Vector2(-400, 720), Vector2(-400, 640), Vector2(200, 600), Vector2(600, 650), Vector2(1000, 610), Vector2(1400, 650), Vector2(1680, 620), Vector2(1680, 720)])
 	add_child(near)
+	var dust := CPUParticles2D.new()
+	dust.position = Vector2(640.0, 360.0)
+	dust.amount = 40
+	dust.lifetime = 9.0
+	dust.preprocess = 9.0
+	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	dust.emission_rect_extents = Vector2(700.0, 380.0)
+	dust.direction = Vector2(1.0, -0.25)
+	dust.spread = 25.0
+	dust.gravity = Vector2.ZERO
+	dust.initial_velocity_min = 10.0
+	dust.initial_velocity_max = 35.0
+	dust.scale_amount_min = 2.0
+	dust.scale_amount_max = 5.0
+	dust.color = Color(1.0, 0.9, 0.7, 0.35)
+	add_child(dust)
 
 
 # -------------------------------------------------------------------- screens
@@ -72,26 +98,58 @@ func _show_main() -> void:
 	box.add_theme_constant_override("separation", 14)
 	_content.add_child(box)
 	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
-	box.offset_left = 90.0
-	box.offset_top = -230.0
-	box.offset_right = 600.0
-	box.offset_bottom = 230.0
+	box.offset_left = 80.0
+	box.offset_top = -270.0
+	box.offset_right = 620.0
+	box.offset_bottom = 270.0
 
-	var title := UiKit.label("WILD PAKISTAN", 64, Color(1.0, 0.93, 0.75))
-	UiKit.outlined(title, 8)
+	var title := UiKit.label("WILD PAKISTAN", 70, Color(1.0, 0.93, 0.75))
+	UiKit.outlined(title, 10)
 	box.add_child(title)
-	var sub := UiKit.label("The Last Wilderness", 30, Color(0.9, 0.85, 0.7))
+	var sub := UiKit.label("The Last Wilderness", 32, Color(0.95, 0.8, 0.5))
 	UiKit.outlined(sub, 6)
 	box.add_child(sub)
+	var tag := UiKit.label("Run. Hunt. Survive. Protect the wild.", 20, Color(0.85, 0.9, 0.85))
+	UiKit.outlined(tag, 4)
+	box.add_child(tag)
 	box.add_child(Control.new())
-	box.add_child(UiKit.button("Play", _show_select, Vector2(320, 68)))
-	box.add_child(UiKit.button("Journal", _show_journal, Vector2(320, 60)))
-	box.add_child(UiKit.button("Settings", _show_settings, Vector2(320, 60)))
-	if not OS.has_feature("mobile"):
-		box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit(), Vector2(320, 60)))
-	var ver := UiKit.label("v%s  |  Coins: %d" % [GameConst.GAME_VERSION, SaveManager.coins()], 16, Color(0.85, 0.85, 0.8))
+
+	var last_a: String = _sel_animal
+	var play := UiKit.button("PLAY NOW", func() -> void: GameState.start_game(_sel_animal, _sel_biome), Vector2(380, 84))
+	UiKit.accent_button(play)
+	box.add_child(play)
+	var pick := UiKit.button("Choose animal and habitat", _show_select, Vector2(380, 60))
+	box.add_child(pick)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.add_child(UiKit.button("Journal", _show_journal, Vector2(184, 56)))
+	row.add_child(UiKit.button("Settings", _show_settings, Vector2(184, 56)))
+	box.add_child(row)
+	if not OS.has_feature("mobile") and not OS.has_feature("web"):
+		box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit(), Vector2(380, 50)))
+	var stats: Dictionary = SaveManager.data["stats"]
+	var ver := UiKit.label("Playing as %s   |   Best score %d   |   Coins %d" % [Animals.DB[last_a]["name"], int(stats.get("best_score", 0)), SaveManager.coins()], 16, Color(0.9, 0.9, 0.8))
 	UiKit.outlined(ver, 4)
 	box.add_child(ver)
+
+	var i := 0
+	for c in box.get_children():
+		if c is Control:
+			UiKit.intro(c, 0.1 * i)
+		i += 1
+	await get_tree().process_frame
+	if is_instance_valid(play):
+		UiKit.pulse(play)
+
+	# live 3D animal on the right
+	var prev := _make_preview(false)
+	_content.add_child(prev)
+	prev.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
+	prev.offset_left = -560.0
+	prev.offset_right = -40.0
+	prev.offset_top = -300.0
+	prev.offset_bottom = 300.0
+	UiKit.intro(prev, 0.4)
 
 
 func _show_select() -> void:
@@ -146,6 +204,7 @@ func _show_select() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(500, 0)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var info := VBoxContainer.new()
 	info.add_theme_constant_override("separation", 8)
@@ -169,11 +228,22 @@ func _show_select() -> void:
 	if AdManager.is_available():
 		info.add_child(UiKit.button("Watch ad: +50 coins", _watch_ad_for_coins, Vector2(320, 50)))
 
-	var go := UiKit.button("START", func() -> void: GameState.start_game(_sel_animal, _sel_biome), Vector2(340, 72))
+	# START is pinned below the scrolling details so it can never be lost off-screen.
+	var bar := HBoxContainer.new()
+	bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	bar.add_theme_constant_override("separation", 20)
+	var go := UiKit.button("START GAME", func() -> void: GameState.start_game(_sel_animal, _sel_biome), Vector2(460, 76))
+	UiKit.accent_button(go)
 	go.disabled = locked or _sel_biome == ""
-	info.add_child(go)
+	bar.add_child(go)
 	if locked:
-		info.add_child(UiKit.label("Complete %d missions to unlock (you have %d)." % [cfg["unlock_missions"], SaveManager.completed_count()], 18, Color(1.0, 0.6, 0.5)))
+		var need := UiKit.label("Complete %d missions to unlock (you have %d)." % [cfg["unlock_missions"], SaveManager.completed_count()], 18, Color(1.0, 0.7, 0.55))
+		bar.add_child(need)
+	root.add_child(bar)
+	if not go.disabled:
+		await get_tree().process_frame
+		if is_instance_valid(go):
+			UiKit.pulse(go)
 
 
 func _make_preview(locked: bool) -> Control:

@@ -11,7 +11,9 @@ const LAYER_AREA := 16
 const GAME_VERSION := "1.0.0"
 
 ## One in-game day lasts this many real seconds.
-const DAY_LENGTH := 180.0
+const DAY_LENGTH := 120.0
+## Global movement multiplier: makes every animal feel quicker.
+const PACE := 1.3
 ## Days per season.
 const SEASON_DAYS := 2
 const SEASONS := ["spring", "summer", "autumn", "winter"]

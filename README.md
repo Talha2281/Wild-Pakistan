@@ -25,10 +25,16 @@ godot --headless --path . -s tests/smoke_test.gd
 ```
 Loads every biome with every animal, simulates input, cycles weather and seasons, and synthesizes all sounds. Check the output for `FAIL:` and `SCRIPT ERROR`.
 
+## New in this version
+- **Menu:** animated 3D menu with a big pulsing **PLAY NOW** button (starts instantly) and a **START GAME** button pinned at the bottom of the animal screen so it can never scroll out of view.
+- **Faster, more engaging play:** 30% faster movement, 2-minute days, glowing **spirit orbs** (gold ones heal), a **combo multiplier** (up to x10) fed by orbs, eating, drinking, hunting and rescues, milestone coin bonuses, best score, and a **PLAY AGAIN** screen.
+- **Sound:** background music (menu and in-game), orb/combo chimes, and audio that restarts on the first click/tap so browsers never leave the game silent. Music volume is in Settings.
+- **Landing page (`landing/`):** a free real-time 3D scroll flythrough (Thar, Ziarat, Northern Mountains) with a PLAY button. The GitHub workflow publishes it at the site root and the game at `/game/`.
+
 ## Export as a web game (HTML5)
 The project uses the Compatibility renderer, which is what web export requires.
 1. Editor > Manage Export Templates > Download and Install.
-2. Project > Export > the **Web** preset (already set up) > **Export Project** to `build/web/index.html`.
+2. Project > Export > the **Web** preset (already set up) > **Export Project** to `build/web/game/index.html`.
 3. Web builds cannot be opened by double-clicking. Test locally with `python3 -m http.server -d build/web 8000` and open http://localhost:8000 , or in Godot use Project > Export > Remote Debug > Run in Browser.
 4. To publish: zip the contents of `build/web` and upload to itch.io (kind of project: HTML, "play in browser"), or to any static host.
 Thread support is off so it works on any host. Audio starts after the first click (browser rule). Saves use browser storage, so clearing site data erases progress.

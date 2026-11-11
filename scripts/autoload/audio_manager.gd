@@ -29,12 +29,21 @@ var _rain := 0.0
 var _night := 0.0
 var _sfx_bus := 0
 var _amb_bus := 0
+var _music_bus := 0
+var _music: AudioStreamPlayer
+var _music_name := ""
+var _music_db := -10.0
+var _unlocked := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_sfx_bus = _ensure_bus("SFX")
 	_amb_bus = _ensure_bus("Ambience")
+	_music_bus = _ensure_bus("Music")
+	_music = AudioStreamPlayer.new()
+	_music.bus = "Music"
+	add_child(_music)
 	apply_volumes()
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer3D.new()
@@ -65,7 +74,40 @@ func _ensure_bus(bus_name: String) -> int:
 func apply_volumes() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(float(SaveManager.setting("master")), 0.0001)))
 	AudioServer.set_bus_volume_db(_sfx_bus, linear_to_db(maxf(float(SaveManager.setting("sfx")), 0.0001)))
+	AudioServer.set_bus_volume_db(_music_bus, linear_to_db(maxf(float(SaveManager.setting("music")), 0.0001)))
 	AudioServer.set_bus_volume_db(_amb_bus, linear_to_db(maxf(float(SaveManager.setting("ambience")), 0.0001)))
+
+
+# ------------------------------------------------------------------- music
+
+## Looping background music. Safe to call every scene; the same track keeps playing.
+func play_music(track: String, volume_db := -10.0) -> void:
+	_music_db = volume_db
+	if _music_name == track and _music.playing:
+		_music.volume_db = volume_db
+		return
+	_music_name = track
+	_music.stream = _get_stream(track)
+	_music.volume_db = -60.0
+	_music.play()
+	create_tween().tween_property(_music, "volume_db", volume_db, 1.5)
+
+
+## Browsers keep audio muted until the first tap/click. On that first input restart
+## everything that should already be playing so sound is always heard.
+func _input(event: InputEvent) -> void:
+	if _unlocked:
+		return
+	if event is InputEventMouseButton or event is InputEventScreenTouch or event is InputEventKey:
+		if not event.is_pressed():
+			return
+		_unlocked = true
+		if _music.stream != null:
+			_music.play()
+		for key in _layers:
+			var p: AudioStreamPlayer = _layers[key]
+			if p.stream != null:
+				p.play()
 
 
 # ---------------------------------------------------------------- ambience
@@ -74,7 +116,7 @@ func apply_volumes() -> void:
 func start_ambience(bed: String) -> void:
 	stop_ambience()
 	_bed_name = bed
-	_make_layer("bed", bed, -8.0)
+	_make_layer("bed", bed, -4.0)
 	_make_layer("wind", "wind", -14.0)
 	_make_layer("rain", "rain", -10.0)
 	_make_layer("night", "night", -16.0)
@@ -163,7 +205,7 @@ func play_3d(sound: String, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.06
 
 
 ## Non-positional one-shot (UI sounds, thunder, rewards).
-func play_ui(sound: String, volume_db := 0.0) -> void:
+func play_ui(sound: String, volume_db := 0.0, pitch := 1.0) -> void:
 	var stream := _get_stream(sound)
 	if stream == null:
 		return
@@ -171,6 +213,7 @@ func play_ui(sound: String, volume_db := 0.0) -> void:
 		if not p.playing:
 			p.stream = stream
 			p.volume_db = volume_db
+			p.pitch_scale = pitch
 			p.play()
 			return
 

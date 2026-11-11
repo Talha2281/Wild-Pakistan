@@ -11,13 +11,21 @@ const R_LOW := 11025
 const R_HI := 22050
 const AMB_LEN := 4.0
 
-const LOOPS := ["amb_desert", "amb_forest", "amb_mountain", "wind", "rain", "night", "heartbeat"]
+const LOOPS := ["music_menu", "music_game", "amb_desert", "amb_forest", "amb_mountain", "wind", "rain", "night", "heartbeat"]
 
 
 static func make(sound: String) -> AudioStreamWAV:
 	match sound:
 		"amb_desert", "amb_forest", "amb_mountain":
 			return _ambient(sound)
+		"music_menu":
+			return _music(false)
+		"music_game":
+			return _music(true)
+		"orb":
+			return _orb()
+		"combo":
+			return _combo()
 		"wind":
 			return _wind()
 		"rain":
@@ -432,3 +440,66 @@ static func _bird() -> AudioStreamWAV:
 	for k in 3:
 		_tone(b, R_LOW, k * 0.11, 0.08, f0, f0 * 1.25, 0.6, 0, 6.0)
 	return _wav(b, R_LOW, false)
+
+
+# Background music: a Phrygian-dominant (D, Eb, F#, G, A, Bb, C) melody over a drone
+# and hand-drum pulse. Menu is slow and warm; game is quicker and driving.
+static func _music(game: bool) -> AudioStreamWAV:
+	var bpm := 132.0 if game else 88.0
+	var beat := 60.0 / bpm
+	var bars := 8
+	var r := R_LOW
+	var b := _buf(beat * 4.0 * bars, r)
+	var notes := [293.66, 311.13, 369.99, 392.0, 440.0, 466.16, 523.25, 587.33]
+	var bass := [73.42, 73.42, 98.0, 73.42, 65.41, 73.42, 98.0, 110.0]
+	var phrases := [
+		[0, -1, 2, 3, 4, 3, 2, 1],
+		[4, 5, 4, 3, 2, 3, 1, -1],
+		[0, 1, 2, 4, 5, 4, 3, 2],
+		[3, 2, 1, 0, 1, 2, 3, 4],
+	]
+	var order := [0, 1, 0, 2, 0, 1, 2, 3]
+	for bar in bars:
+		var t0 := bar * 4.0 * beat
+		_tone(b, r, t0, beat * 3.9, bass[bar], bass[bar], 0.55, 0, 0.35)
+		_tone(b, r, t0, beat * 3.9, bass[bar] * 1.5, bass[bar] * 1.5, 0.22, 0, 0.35)
+		var ph: Array = phrases[order[bar]]
+		for step in 8:
+			var idx: int = ph[step]
+			if idx < 0:
+				continue
+			var tt := t0 + step * beat * 0.5
+			var f: float = notes[idx]
+			_tone(b, r, tt, beat * 0.9, f, f, 0.32, 2, 5.0 if game else 3.5, 5.0, 2.0)
+			if game and step % 2 == 0:
+				_tone(b, r, tt, beat * 0.5, f * 0.5, f * 0.5, 0.12, 1, 8.0)
+		for q in 4:
+			var tq := t0 + q * beat
+			if game or q % 2 == 0:
+				_tone(b, r, tq, 0.2, 130.0, 48.0, 0.85, 0, 13.0)
+			if q % 2 == 1:
+				_noise_burst(b, r, tq, 0.12, 0.3 if game else 0.18, 26.0, 0.55)
+			if game:
+				_noise_burst(b, r, tq + beat * 0.5, 0.05, 0.14, 60.0, 0.8)
+	var n := b.size()
+	var fade := int(0.02 * r)
+	for i in fade:
+		var k := float(i) / fade
+		b[i] *= k
+		b[n - 1 - i] *= k
+	return _wav(b, r, true)
+
+
+static func _orb() -> AudioStreamWAV:
+	var b := _buf(0.35, R_HI)
+	_tone(b, R_HI, 0.0, 0.15, 1100.0, 1700.0, 0.7, 0, 14.0)
+	_tone(b, R_HI, 0.05, 0.25, 1650.0, 2200.0, 0.55, 0, 10.0)
+	return _wav(b, R_HI, false)
+
+
+static func _combo() -> AudioStreamWAV:
+	var b := _buf(0.7, R_HI)
+	var f := [523.25, 659.25, 783.99, 1046.5]
+	for i in 4:
+		_tone(b, R_HI, i * 0.09, 0.3, f[i], f[i], 0.6, 0, 7.0)
+	return _wav(b, R_HI, false)

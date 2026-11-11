@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS := {
 	"master": 1.0,
 	"sfx": 1.0,
 	"ambience": 0.8,
+	"music": 0.7,
 	"sensitivity": 1.0,
 	"quality": 1,
 	"tutorial_done": false,

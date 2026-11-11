@@ -23,3 +23,5 @@ signal unlocked(what: String)
 ## drink, eat, hunt, dig, chase_escaped, shikari_lost, rescued, disarm, sabotage,
 ## summit, lookout, storm_survived, day_survived
 signal game_event(event_name: String)
+signal score_changed(score: int, combo: int)
+signal score_popup(text: String)

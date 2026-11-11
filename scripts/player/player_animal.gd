@@ -126,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		speed *= clampf(input.length(), 0.4, 1.0)
 	if slow_timer > 0.0:
 		speed *= 0.45
+	speed *= GameConst.PACE
 
 	if _impulse_time <= 0.0:
 		var target := dir * speed

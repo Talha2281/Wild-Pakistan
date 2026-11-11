@@ -13,6 +13,7 @@ func _ready() -> void:
 	add_theme_constant_override("separation", 12)
 	_add_slider("Master volume", "master", 0.0, 1.0, 0.05)
 	_add_slider("Effects volume", "sfx", 0.0, 1.0, 0.05)
+	_add_slider("Music volume", "music", 0.0, 1.0, 0.05)
 	_add_slider("Ambience volume", "ambience", 0.0, 1.0, 0.05)
 	_add_slider("Camera sensitivity", "sensitivity", 0.4, 2.0, 0.1)
 

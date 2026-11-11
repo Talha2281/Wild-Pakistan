@@ -37,7 +37,9 @@ func _ready() -> void:
 	_build_terrain()
 	Decor.build(self, terrain, _rng, GameState.biome_id, cfg["flora"])
 	_spawn_world_props()
+	GameState.reset_run()
 	_spawn_player()
+	_spawn_orbs(44)
 	_spawn_wildlife()
 	_spawn_shikari()
 
@@ -51,6 +53,7 @@ func _ready() -> void:
 	add_child(hud)
 
 	AudioManager.start_ambience(cfg["ambience"])
+	AudioManager.play_music("music_game", -14.0)
 	Events.player_died.connect(_on_player_died)
 	Events.toast.emit("%s - %s. %s" % [cfg["name"], Animals.DB[GameState.animal_id]["name"], "Find water first."])
 	_run_tutorial()
@@ -296,7 +299,28 @@ func _spawn_shikari() -> void:
 
 ## Keeps populations from collapsing: when a species falls below 70% of its
 ## target, one new animal wanders in from far away from the player.
+func _spawn_orbs(count: int) -> void:
+	var near_origin := 8
+	for i in count:
+		var p: Vector2
+		if i < near_origin and _orb_count() == i:
+			# A trail of orbs right next to the start so the first seconds pay off.
+			var ang := float(i) / near_origin * TAU
+			p = Vector2(cos(ang), sin(ang)) * (9.0 + 2.0 * float(i % 3))
+		else:
+			p = terrain.random_point(_rng, 8.0, 0.8)
+		var orb := SpiritOrb.new()
+		orb.setup(terrain.ground(p, 1.1), _rng.randf() < 0.16)
+		add_child(orb)
+
+
+func _orb_count() -> int:
+	return get_tree().get_nodes_in_group("orbs").size()
+
+
 func _ecosystem_tick() -> void:
+	if _orb_count() < 34:
+		_spawn_orbs(6)
 	var counts: Dictionary = {}
 	for n in get_tree().get_nodes_in_group("animals"):
 		var a := n as WildlifeAI
@@ -342,6 +366,7 @@ func _distant_sound() -> void:
 
 func _on_player_died() -> void:
 	SaveManager.set_stat_max("best_days", GameState.days_survived)
+	GameState.bank_run()
 
 
 func _run_tutorial() -> void:

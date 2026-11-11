@@ -32,8 +32,14 @@ var _pause_menu: Control
 var _game_over: Control
 var _game_over_title: Label
 var _revive_button: Button
+var _game_over_stats: Label
 var _toast_tween: Tween
 var _info_timer := 0.0
+var _score_label: Label
+var _combo_label: Label
+var _popup_label: Label
+var _popup_tween: Tween
+var _score_shown := 0.0
 
 
 func _ready() -> void:
@@ -51,6 +57,7 @@ func _ready() -> void:
 	_build_stats()
 	_build_top_center()
 	_build_top_right()
+	_build_score()
 	_build_messages()
 	_build_touch_controls()
 	_build_pause_menu()
@@ -64,6 +71,8 @@ func _ready() -> void:
 	Events.prompt_changed.connect(_on_prompt)
 	Events.toast.connect(_show_toast)
 	Events.coins_changed.connect(_on_coins)
+	Events.score_changed.connect(_on_score)
+	Events.score_popup.connect(_on_popup)
 	Events.missions_changed.connect(_refresh_missions)
 	Events.ability_cooldown.connect(func(f: float) -> void: _ability_button.cooldown = f)
 	_on_coins(SaveManager.coins())
@@ -178,6 +187,59 @@ func _build_top_right() -> void:
 	_root.add_child(_mission_panel)
 
 
+func _build_score() -> void:
+	_score_label = UiKit.label("0", 40, Color(1.0, 0.92, 0.55), true)
+	UiKit.outlined(_score_label, 8)
+	_score_label.anchor_right = 1.0
+	_score_label.offset_left = 300.0
+	_score_label.offset_right = -340.0
+	_score_label.offset_top = 34.0
+	_score_label.offset_bottom = 84.0
+	_score_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_score_label.pivot_offset = Vector2(250.0, 25.0)
+	_root.add_child(_score_label)
+
+	_combo_label = UiKit.label("", 26, Color(0.5, 1.0, 0.9), true)
+	UiKit.outlined(_combo_label, 6)
+	_combo_label.anchor_right = 1.0
+	_combo_label.offset_left = 300.0
+	_combo_label.offset_right = -340.0
+	_combo_label.offset_top = 84.0
+	_combo_label.offset_bottom = 118.0
+	_combo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_combo_label)
+
+	_popup_label = UiKit.label("", 28, Color(1, 1, 1), true)
+	UiKit.outlined(_popup_label, 7)
+	_popup_label.anchor_right = 1.0
+	_popup_label.anchor_top = 0.5
+	_popup_label.anchor_bottom = 0.5
+	_popup_label.offset_top = -170.0
+	_popup_label.offset_bottom = -130.0
+	_popup_label.offset_left = 300.0
+	_popup_label.offset_right = -300.0
+	_popup_label.modulate.a = 0.0
+	_popup_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_popup_label)
+
+
+func _on_score(score: int, combo: int) -> void:
+	_score_label.text = "%d" % score
+	_combo_label.text = "COMBO x%d" % combo if combo > 1 else ""
+	_score_label.scale = Vector2(1.25, 1.25)
+	create_tween().tween_property(_score_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _on_popup(text: String) -> void:
+	_popup_label.text = text
+	_popup_label.modulate.a = 1.0
+	_popup_label.position.y = -170.0 + 0.0
+	if _popup_tween != null:
+		_popup_tween.kill()
+	_popup_tween = create_tween()
+	_popup_tween.tween_property(_popup_label, "modulate:a", 0.0, 0.9).set_delay(0.25)
+
+
 func _build_messages() -> void:
 	_toast_label = UiKit.label("", 24, Color(1, 1, 1), true)
 	UiKit.outlined(_toast_label, 6)
@@ -282,10 +344,16 @@ func _build_game_over() -> void:
 	center.add_child(box)
 	_game_over_title = UiKit.label("", 32, Color(1, 1, 1), true)
 	box.add_child(_game_over_title)
-	_revive_button = UiKit.button("Revive (watch a short ad)", _on_revive_pressed, Vector2(340, 64))
+	_game_over_stats = UiKit.label("", 24, Color(1.0, 0.92, 0.55), true)
+	box.add_child(_game_over_stats)
+	_revive_button = UiKit.button("Revive (watch a short ad)", _on_revive_pressed, Vector2(380, 64))
 	box.add_child(_revive_button)
-	box.add_child(UiKit.button("Try Again", func() -> void: GameState.reload_level(), Vector2(340, 64)))
-	box.add_child(UiKit.button("Main Menu", func() -> void: GameState.go_menu(), Vector2(340, 64)))
+	var again := UiKit.button("PLAY AGAIN", func() -> void: GameState.reload_level(), Vector2(380, 80))
+	again.add_theme_font_size_override("font_size", 32)
+	again.add_theme_stylebox_override("normal", UiKit.flat(Color(0.85, 0.45, 0.12, 1.0), 16, Color(1.0, 0.85, 0.4, 1.0)))
+	again.add_theme_stylebox_override("hover", UiKit.flat(Color(0.95, 0.55, 0.18, 1.0), 16, Color(1.0, 0.95, 0.6, 1.0)))
+	box.add_child(again)
+	box.add_child(UiKit.button("Main Menu", func() -> void: GameState.go_menu(), Vector2(380, 60)))
 
 
 # ------------------------------------------------------------------ handlers
@@ -356,6 +424,13 @@ func _on_died() -> void:
 		return
 	var days := GameState.days_survived
 	_game_over_title.text = "The wilderness claims another life.\nYou survived %d day%s." % [days, "" if days == 1 else "s"]
+	GameState.bank_run()
+	var earned := GameState.banked_coins
+	var banner := ""
+	if GameState.score > GameState.best_before and GameState.score > 0:
+		banner = "NEW BEST!   "
+	_game_over_stats.text = "%sScore %d   |   Best %d\nOrbs %d   |   +%d coins" % [banner, GameState.score, maxi(GameState.best_before, GameState.score), GameState.orbs, earned]
+	AudioManager.play_ui("chime")
 	_revive_button.visible = AdManager.is_available()
 	_game_over.visible = true
 
