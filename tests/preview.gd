@@ -28,6 +28,13 @@ func _run() -> void:
 	root.size = Vector2i(1280, 720)
 	_gs = root.get_node("GameState")
 	await _wait(5)
+	# ---- main menu
+	var menu: Node = (load("res://scenes/main_menu.tscn") as PackedScene).instantiate()
+	root.add_child(menu)
+	await _wait(60)
+	_shot("menu")
+	menu.queue_free()
+	await _wait(3)
 	# ---- species gallery
 	for id in AnimalModel.SPECS:
 		var holder := Node3D.new()

@@ -233,7 +233,7 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	MeshBuilder.tube(hst, Vector3(0.0, -hh * 0.05, -hl * 0.55), tip, hh * 0.34, hh * 0.22, base.lerp(muzzle, 0.5), muzzle, 8, false)
 	MeshBuilder.ellipsoid(hst, tip + Vector3(0.0, 0.0, 0.01), Vector3(hh * 0.2, hh * 0.15, hh * 0.14), dark, Color(0, 0, 0, 0), Basis.IDENTITY, 8, 4, 0.0)
 	MeshBuilder.ellipsoid(hst, Vector3(0.0, -hh * 0.36, -hl * 0.45), Vector3(hw * 0.28, hh * 0.2, hl * 0.3), belly, Color(0, 0, 0, 0), Basis.IDENTITY, 8, 4)
-	for side in [-1.0, 1.0]:
+	for side: float in [-1.0, 1.0]:
 		MeshBuilder.ellipsoid(hst, Vector3(side * hw * 0.44, hh * 0.14, -hl * 0.5), Vector3(hh * 0.07, hh * 0.11, hh * 0.11), dark, Color(0, 0, 0, 0), Basis.IDENTITY, 6, 4, 0.0)
 		if spec.get("face_stripe", false):
 			MeshBuilder.tube(hst, Vector3(side * hw * 0.4, hh * 0.1, -hl * 0.55), tip + Vector3(side * hh * 0.18, hh * 0.1, hl * 0.05), hh * 0.035, hh * 0.03, dark, dark, 4, false)
@@ -278,7 +278,7 @@ static func _add_foot(st: SurfaceTool, at: Vector3, t: float, paws: bool, dark: 
 
 static func _add_ears(st: SurfaceTool, style: String, hw: float, hh: float, hl: float, base: Color) -> void:
 	var inner := base.lightened(0.18)
-	for side in [-1.0, 1.0]:
+	for side: float in [-1.0, 1.0]:
 		var at := Vector3(side * hw * 0.38, hh * 0.38, hl * 0.02)
 		match style:
 			"long":
@@ -295,7 +295,7 @@ static func _add_horns(st: SurfaceTool, style: String, hw: float, hh: float, hl:
 	if style == "none":
 		return
 	var tipc := color.lightened(0.15)
-	for side in [-1.0, 1.0]:
+	for side: float in [-1.0, 1.0]:
 		var base_p := Vector3(side * hw * 0.2, hh * 0.48, -hl * 0.12)
 		var pts: Array = []
 		var r0 := H * 0.03
@@ -371,7 +371,7 @@ static func build_human(shirt: Color, turban: Color, armed: bool) -> Node3D:
 	var body := MeshBuilder.instance(meshes["body"])
 	body.name = "Body"
 	root.add_child(body)
-	for side in [-1.0, 1.0]:
+	for side: float in [-1.0, 1.0]:
 		var pivot := Node3D.new()
 		pivot.name = "LegL" if side < 0.0 else "LegR"
 		pivot.position = Vector3(side * 0.12, 0.84, 0.0)
