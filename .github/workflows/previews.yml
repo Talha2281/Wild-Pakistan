@@ -23,7 +23,7 @@ jobs:
         run: godot --headless --import || true
       - name: Render screenshots
         run: |
-          xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --path . -s tests/preview.gd 2>&1 | tail -60 | tee preview.log || true
+          timeout 420 xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --path . -s tests/preview.gd > preview.log 2>&1 || true; tail -40 preview.log
           ls -la ../previews || true
       - name: Publish screenshots to the previews branch
         run: |
