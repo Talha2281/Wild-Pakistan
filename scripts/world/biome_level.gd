@@ -41,6 +41,7 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_orbs(44)
 	_spawn_wildlife()
+	_spawn_dolphins()
 	_spawn_shikari()
 
 	env = EnvironmentController.new()
@@ -99,7 +100,12 @@ func _build_terrain() -> void:
 	var trapped: Array[Dictionary] = []
 	for entry in cfg["trapped"]:
 		for i in int(entry["count"]):
-			trapped.append({"species": entry["species"], "pos": _scatter_points(1, 12.0, 0.6, 28.0)[0]})
+			if entry["species"] == "indus_dolphin" and cfg.has("river"):
+				var rz := _rng.randf_range(-60.0, 60.0)
+				var side := -1.0 if _rng.randf() < 0.5 else 1.0
+				trapped.append({"species": "indus_dolphin", "pos": Vector2(terrain.river_x(rz) + side * (float(cfg["river"]["width"]) * 0.5 + 10.0), rz)})
+			else:
+				trapped.append({"species": entry["species"], "pos": _scatter_points(1, 12.0, 0.6, 28.0)[0]})
 	_plan["trapped"] = trapped
 	_plan["summits"] = terrain.high_points(_rng, int(cfg["summits"]), 40.0, 26.0) if int(cfg["summits"]) > 0 else []
 	_plan["lookouts"] = terrain.high_points(_rng, int(cfg["lookouts"]), 40.0, 30.0) if int(cfg["lookouts"]) > 0 else []
@@ -158,6 +164,17 @@ func _spawn_world_props() -> void:
 		w.water_color = cfg["water_color"]
 		w.position = terrain.ground(p, 0.1)
 		add_child(w)
+
+	if cfg.has("river"):
+		var zmax := terrain.size * 0.5 * 0.88
+		var zz := -zmax
+		while zz <= zmax:
+			var ws := WaterSource.new()
+			ws.radius = float(cfg["river"]["width"]) * 0.5 + 5.0
+			ws.show_disc = false
+			ws.position = Vector3(terrain.river_x(zz), terrain.river_level(), zz)
+			add_child(ws)
+			zz += 16.0
 
 	var placed := 0
 	var tries := 0
@@ -263,6 +280,18 @@ func _spawn_wildlife() -> void:
 			else:
 				p = _far_point(far)
 			_spawn_animal(id, p)
+
+
+func _spawn_dolphins() -> void:
+	if not cfg.has("river"):
+		return
+	var n := int(cfg["river"].get("dolphins", 2))
+	for i in n:
+		var d := RiverDolphin.new()
+		d.z = _rng.randf_range(-70.0, 70.0)
+		d.dir = -1.0 if _rng.randf() < 0.5 else 1.0
+		d.speed = _rng.randf_range(2.0, 3.2)
+		add_child(d)
 
 
 func _far_point(min_dist: float) -> Vector2:

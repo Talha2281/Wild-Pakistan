@@ -83,9 +83,67 @@ const SPECS := {
 		"leg": 0.42, "ears": "round", "tail": "long_thick", "spots": Color(0.17, 0.17, 0.2),
 		"spot_n": 12, "neck": 0.7, "head": 1.0, "snout": 0.5, "thick": 1.3, "belly_light": 0.3,
 	},
+	"wild_boar": {
+		"paws": true,
+		"color": Color(0.27, 0.21, 0.17), "len": 1.4, "h": 0.78, "w": 0.34, "bl": 0.68, "bh": 0.46,
+		"leg": 0.36, "ears": "pointed", "tail": "stub", "hump": 0.12, "thick": 1.5, "neck": 0.35,
+		"neck_w": 0.9, "head": 1.25, "snout": 1.2, "muzzle": Color(0.4, 0.32, 0.26), "belly_light": 0.15,
+	},
+	"jackal": {
+		"paws": true,
+		"color": Color(0.66, 0.56, 0.38), "len": 1.0, "h": 0.55, "ears": "pointed", "tail": "bushy",
+		"tail_tip": Color(0.15, 0.12, 0.1), "snout": 0.95, "neck": 0.85, "belly_light": 0.4,
+		"leg_color": Color(0.5, 0.4, 0.28),
+	},
+	"striped_hyena": {
+		"paws": true,
+		"color": Color(0.6, 0.55, 0.46), "len": 1.35, "h": 0.8, "w": 0.28, "bl": 0.66, "bh": 0.42,
+		"leg": 0.46, "ears": "pointed", "tail": "bushy", "hump": 0.14, "spots": Color(0.15, 0.14, 0.14),
+		"spot_n": 9, "snout": 0.8, "neck": 0.8, "thick": 1.15, "ruff": true, "belly_light": 0.2,
+	},
+	"urial": {
+		"color": Color(0.68, 0.5, 0.34), "len": 1.35, "h": 0.88, "horns": "ram",
+		"horn_color": Color(0.42, 0.35, 0.28), "ears": "short", "tail": "short", "beard": true,
+		"neck": 0.8, "thick": 1.1, "belly_light": 0.5,
+	},
+	"marco_polo": {
+		"color": Color(0.8, 0.74, 0.64), "len": 1.65, "h": 1.08, "w": 0.3, "horns": "ram",
+		"horn_color": Color(0.74, 0.67, 0.5), "ears": "short", "tail": "short", "ruff": true,
+		"neck": 0.9, "thick": 1.2, "belly_light": 0.55,
+	},
+	"musk_deer": {
+		"paws": true,
+		"color": Color(0.45, 0.37, 0.27), "len": 0.9, "h": 0.58, "leg": 0.52, "ears": "long",
+		"tail": "stub", "snout": 0.8, "neck": 0.8, "w": 0.25, "belly_light": 0.4,
+	},
 }
 
 static var _cache: Dictionary = {}
+
+
+## Indus river dolphin: long beak, small eye, low dorsal, broad flippers and flukes.
+## Forward is -Z. One mesh, cached.
+static func build_dolphin() -> Node3D:
+	if not _cache.has("indus_dolphin"):
+		var st := MeshBuilder.start()
+		var col := Color(0.5, 0.47, 0.48)
+		var belly := Color(0.84, 0.72, 0.7)
+		MeshBuilder.ellipsoid(st, Vector3(0, 0, 0.1), Vector3(0.3, 0.32, 0.95), col, belly, Basis.IDENTITY, 12, 8, 0.02)
+		MeshBuilder.ellipsoid(st, Vector3(0, 0.03, -0.78), Vector3(0.23, 0.25, 0.36), col, belly, Basis.IDENTITY, 10, 6, 0.02)
+		MeshBuilder.tube(st, Vector3(0, -0.03, -1.0), Vector3(0, -0.05, -1.85), 0.075, 0.032, col, belly, 8)
+		MeshBuilder.curve_tube(st, [Vector3(0, 0, 0.8), Vector3(0, 0.02, 1.25), Vector3(0, 0.06, 1.7)], 0.2, 0.06, col, col, 8)
+		MeshBuilder.ellipsoid(st, Vector3(0, 0.07, 1.78), Vector3(0.52, 0.03, 0.17), col, Color(0, 0, 0, 0), Basis.IDENTITY, 10, 4, 0.0)
+		MeshBuilder.ellipsoid(st, Vector3(0, 0.36, 0.35), Vector3(0.03, 0.15, 0.2), col, Color(0, 0, 0, 0), Basis.from_euler(Vector3(deg_to_rad(-25.0), 0.0, 0.0)), 8, 4, 0.0)
+		for side: float in [-1.0, 1.0]:
+			MeshBuilder.ellipsoid(st, Vector3(side * 0.36, -0.14, -0.42), Vector3(0.22, 0.035, 0.13), col, Color(0, 0, 0, 0), Basis.from_euler(Vector3(0.0, 0.0, deg_to_rad(side * -25.0))), 8, 4, 0.0)
+			MeshBuilder.ellipsoid(st, Vector3(side * 0.11, 0.1, -1.0), Vector3(0.03, 0.03, 0.03), Color(0.05, 0.05, 0.05), Color(0, 0, 0, 0), Basis.IDENTITY, 5, 3, 0.0)
+		_cache["indus_dolphin"] = MeshBuilder.finish(st)
+	var root := Node3D.new()
+	root.name = "Visual"
+	var body := MeshBuilder.instance(_cache["indus_dolphin"])
+	body.name = "Body"
+	root.add_child(body)
+	return root
 
 
 ## Builds a model for a species. tint (alpha > 0) replaces the base colour (skins).

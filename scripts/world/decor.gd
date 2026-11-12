@@ -14,6 +14,16 @@ const PALETTE := {
 		"shrub": Color(0.36, 0.44, 0.24), "tuft": Color(0.55, 0.55, 0.32), "pebble": Color(0.5, 0.46, 0.4),
 		"rock": Color(0.5, 0.46, 0.4), "trunk": Color(0.42, 0.3, 0.2), "crown": Color(0.2, 0.36, 0.24),
 	},
+	"indus": {
+		"shrub": Color(0.4, 0.46, 0.26), "tuft": Color(0.5, 0.56, 0.3), "pebble": Color(0.55, 0.5, 0.42),
+		"rock": Color(0.55, 0.5, 0.42), "trunk": Color(0.34, 0.26, 0.2), "crown": Color(0.42, 0.55, 0.38),
+		"reed": Color(0.62, 0.66, 0.34),
+	},
+	"deosai": {
+		"shrub": Color(0.36, 0.44, 0.24), "tuft": Color(0.42, 0.55, 0.26), "pebble": Color(0.5, 0.48, 0.44),
+		"rock": Color(0.5, 0.47, 0.42), "trunk": Color(0.3, 0.22, 0.16), "crown": Color(0.2, 0.34, 0.22),
+		"reed": Color(0.5, 0.6, 0.3),
+	},
 	"northern": {
 		"shrub": Color(0.45, 0.45, 0.35), "tuft": Color(0.6, 0.58, 0.4), "pebble": Color(0.5, 0.5, 0.5),
 		"rock": Color(0.42, 0.4, 0.4), "trunk": Color(0.3, 0.22, 0.16), "crown": Color(0.16, 0.3, 0.22),
@@ -56,6 +66,24 @@ static func build(level: Node3D, terrain: BiomeTerrain, rng: RandomNumberGenerat
 				_solid_rocks(level, terrain, rng, count, 1.0, 2.4, pal["rock"])
 			"boulder":
 				_solid_rocks(level, terrain, rng, count, 2.6, 5.0, pal["rock"].darkened(0.08))
+			"reed":
+				var m := CylinderMesh.new()
+				m.top_radius = 0.0
+				m.bottom_radius = 0.1
+				m.height = 1.9
+				m.radial_segments = 4
+				m.rings = 1
+				_scatter(level, terrain, rng, [m], [_vmat(pal.get("reed", pal["tuft"]))], [Vector3(0.0, 0.95, 0.0)], count, 0.7, 1.4, 1.0, bool(entry.get("river", false)))
+			"flower":
+				var m := SphereMesh.new()
+				m.radius = 0.13
+				m.height = 0.2
+				m.radial_segments = 5
+				m.rings = 2
+				_scatter(level, terrain, rng, [m], [_vmat(Color(1, 1, 1))], [Vector3(0.0, 0.3, 0.0)], count, 0.8, 1.5, 1.0, false, [Color(0.98, 0.85, 0.2), Color(0.95, 0.95, 0.9), Color(0.7, 0.45, 0.85), Color(0.95, 0.5, 0.65)])
+			"tamarisk":
+				_multi_trees(level, terrain, rng, count, pal, 2.0)
+				_solid_trees(level, terrain, rng, mini(count / 6, 12), pal, false)
 			"khejri":
 				_solid_trees(level, terrain, rng, count, pal, false)
 			"juniper":
@@ -66,25 +94,56 @@ static func build(level: Node3D, terrain: BiomeTerrain, rng: RandomNumberGenerat
 				_solid_trees(level, terrain, rng, mini(count / 4, 20), pal, true)
 
 
-static func _scatter(level: Node3D, terrain: BiomeTerrain, rng: RandomNumberGenerator, meshes: Array, mats: Array, offsets: Array, count: int, min_s: float, max_s: float, tall: float) -> void:
+static var _vmats: Dictionary = {}
+
+
+## Material that multiplies per-instance colours (natural variation between plants).
+static func _vmat(color: Color) -> StandardMaterial3D:
+	var key := color.to_html()
+	if not _vmats.has(key):
+		var m := PlaceholderModel.material(color).duplicate() as StandardMaterial3D
+		m.vertex_color_use_as_albedo = true
+		_vmats[key] = m
+	return _vmats[key]
+
+
+static func _river_point(terrain: BiomeTerrain, rng: RandomNumberGenerator) -> Vector2:
+	var half := terrain.size * 0.5
+	var z := rng.randf_range(-half * 0.85, half * 0.85)
+	var side := -1.0 if rng.randf() < 0.5 else 1.0
+	var hw := float(terrain.cfg["river"]["width"]) * 0.5
+	return Vector2(terrain.river_x(z) + side * rng.randf_range(hw + 1.0, hw + 12.0), z)
+
+
+static func _scatter(level: Node3D, terrain: BiomeTerrain, rng: RandomNumberGenerator, meshes: Array, mats: Array, offsets: Array, count: int, min_s: float, max_s: float, tall: float, near_river := false, palette: Array = []) -> void:
 	var transforms: Array[Transform3D] = []
+	var tints: Array[Color] = []
 	for i in count:
 		var p := _free_point(terrain, rng, 4.0, 1.1)
+		if near_river and terrain.cfg.has("river"):
+			p = _river_point(terrain, rng)
+		if palette.is_empty():
+			var v := rng.randf_range(0.78, 1.12)
+			tints.append(Color(v, v * rng.randf_range(0.95, 1.06), v * rng.randf_range(0.9, 1.05)))
+		else:
+			tints.append(palette[rng.randi() % palette.size()])
 		var s := rng.randf_range(min_s, max_s)
 		var basis := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.8, 1.3) * tall, s))
 		transforms.append(Transform3D(basis, terrain.ground(p)))
 	for k in meshes.size():
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
 		mm.mesh = meshes[k]
 		mm.instance_count = count
 		for i in count:
 			var t := transforms[i]
 			t.origin += t.basis * (offsets[k] as Vector3)
 			mm.set_instance_transform(i, t)
+			mm.set_instance_color(i, tints[i])
 		var inst := MultiMeshInstance3D.new()
 		inst.multimesh = mm
-		inst.material_override = mats[k]
+		inst.material_override = _vmat((mats[k] as StandardMaterial3D).albedo_color) if palette.is_empty() else mats[k]
 		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		level.add_child(inst)
 
@@ -101,7 +160,17 @@ static func _multi_trees(level: Node3D, terrain: BiomeTerrain, rng: RandomNumber
 	var meshes: Array = [trunk]
 	var mats: Array = [PlaceholderModel.material(pal["trunk"])]
 	var offs: Array = [Vector3(0.0, 1.0, 0.0)]
-	if style < 0.5:
+	if style > 1.5:
+		for c in 2:
+			var crown := SphereMesh.new()
+			crown.radius = 1.5 - c * 0.45
+			crown.height = (2.0 - c * 0.6)
+			crown.radial_segments = 7
+			crown.rings = 3
+			meshes.append(crown)
+			mats.append(PlaceholderModel.material(pal["crown"].lightened(c * 0.08)))
+			offs.append(Vector3(0.5 * c, 2.2 + c * 0.7, 0.3 * c))
+	elif style < 0.5:
 		var crown := SphereMesh.new()
 		crown.radius = 1.3
 		crown.height = 2.6

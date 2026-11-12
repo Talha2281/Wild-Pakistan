@@ -359,9 +359,9 @@ func _show_journal() -> void:
 	col.add_child(UiKit.label("Missions completed: %d / %d    Best run: %d days    Total days: %d    Hunts: %d    Rescues: %d    Deaths: %d" % [
 		SaveManager.completed_count(), MissionManager.MISSIONS.size(), int(stats.get("best_days", 0)),
 		int(stats.get("total_days", 0)), int(stats.get("kills", 0)), int(stats.get("rescues", 0)), int(stats.get("deaths", 0))], 20, Color(1.0, 0.88, 0.4)))
-	col.add_child(UiKit.label("Complete missions to unlock animals: Markhor (3), Snow Leopard (8), Himalayan Brown Bear (12) and habitats: Ziarat (2), Northern Mountains (6).", 18))
+	col.add_child(UiKit.label("Complete missions to unlock animals: Markhor (3), Snow Leopard (8), Himalayan Brown Bear (12) and habitats: Indus River (2), Ziarat (3), Deosai (5), Northern Mountains (7).", 18))
 
-	for biome in ["thar", "ziarat", "northern", "any"]:
+	for biome in ["thar", "indus", "ziarat", "deosai", "northern", "any"]:
 		var heading := "Anywhere" if biome == "any" else String(Biomes.DB[biome]["name"])
 		col.add_child(UiKit.label(heading, 28, Color(1.0, 0.93, 0.75)))
 		if biome != "any":

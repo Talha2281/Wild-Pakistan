@@ -36,7 +36,10 @@ func _run() -> void:
 	menu.queue_free()
 	await _wait(3)
 	# ---- species gallery
-	for id in AnimalModel.SPECS:
+	var ids: Array = AnimalModel.SPECS.keys()
+	ids.append("indus_dolphin")
+	ids.append("ranger")
+	for id in ids:
 		var holder := Node3D.new()
 		root.add_child(holder)
 		var env := WorldEnvironment.new()
@@ -60,12 +63,24 @@ func _run() -> void:
 		gm.albedo_color = Color(0.55, 0.5, 0.38)
 		ground.material_override = gm
 		holder.add_child(ground)
-		var m := AnimalModel.build(id)
+		var m: Node3D
+		var size := Vector2(0.4, 0.6)
+		var span := 2.2
+		if id == "indus_dolphin":
+			m = AnimalModel.build_dolphin()
+			m.position.y = 0.5
+		elif id == "ranger":
+			m = AnimalModel.build_ranger(Color(0.2, 0.35, 0.22))
+			size = AnimalModel.capsule_size(id)
+			span = 1.75
+		else:
+			m = AnimalModel.build(id)
+			size = AnimalModel.capsule_size(id)
+			span = float(AnimalModel.SPECS[id]["len"])
 		holder.add_child(m)
-		var size := AnimalModel.capsule_size(id)
 		var cam := Camera3D.new()
 		holder.add_child(cam)
-		var d := maxf(2.6, float(AnimalModel.SPECS[id]["len"]) * 2.1)
+		var d := maxf(2.6, span * 2.1)
 		cam.position = Vector3(d * 0.75, size.y * 0.8 + 0.35, -d * 0.85)
 		cam.look_at(Vector3(0, size.y * 0.5, 0))
 		cam.current = true

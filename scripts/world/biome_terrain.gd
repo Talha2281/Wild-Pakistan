@@ -76,7 +76,62 @@ func raw_height(x: float, z: float) -> float:
 		h += amplitude * 1.6 * pow(smoothstep(0.72, 1.0, edge), 1.4)
 	else:
 		h *= 1.0 - smoothstep(0.78, 1.0, edge)
+	if cfg.has("river"):
+		var r: Dictionary = cfg["river"]
+		var fade := 1.0 - smoothstep(0.78, 0.93, absf(z) / (size * 0.5))
+		var half_w := float(r["width"]) * 0.5
+		var k := (1.0 - smoothstep(half_w, half_w + 9.0, absf(x - river_x(z)))) * fade
+		h = lerpf(h, -float(r["depth"]), k)
 	return h
+
+
+## Centre line of the river (x for a given z). Only valid when cfg has "river".
+func river_x(z: float) -> float:
+	var r: Dictionary = cfg["river"]
+	var f := float(r["freq"])
+	return float(r["amp"]) * sin(z * f + 0.6) + 8.0 * sin(z * f * 2.3)
+
+
+func river_level() -> float:
+	return float(cfg["river"]["level"])
+
+
+## Translucent water ribbon following the river. The terrain pokes through at the banks.
+func build_river_water() -> void:
+	if not cfg.has("river"):
+		return
+	var r: Dictionary = cfg["river"]
+	var zmax := size * 0.5 * 0.93
+	var hw := float(r["width"]) * 0.5 + 12.0
+	var lvl := river_level()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	var n := int(zmax * 2.0 / 4.0)
+	for i in n:
+		var z0 := -zmax + float(i) * 4.0
+		var z1 := z0 + 4.0
+		var x0 := river_x(z0)
+		var x1 := river_x(z1)
+		var a := Vector3(x0 - hw, lvl, z0)
+		var b := Vector3(x0 + hw, lvl, z0)
+		var c := Vector3(x1 - hw, lvl, z1)
+		var d := Vector3(x1 + hw, lvl, z1)
+		for v in [a, b, c, b, d, c]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(v)
+	var mat := StandardMaterial3D.new()
+	var wc: Color = cfg["water_color"]
+	mat.albedo_color = Color(wc.r, wc.g, wc.b, 0.78)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.08
+	mat.metallic_specular = 0.9
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
 
 
 func height_at(x: float, z: float) -> float:
@@ -207,6 +262,7 @@ func build() -> void:
 	cs.shape = shape
 	add_child(cs)
 
+	build_river_water()
 	if edge_mode == "fade":
 		_add_surround(half)
 
@@ -244,6 +300,11 @@ func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, low: Color, h
 	if avg > snow_h:
 		var flat := 1.0 - smoothstep(0.2, 0.5, steep)
 		col = col.lerp(snow_col, clampf((avg - snow_h) / 6.0, 0.0, 1.0) * flat)
+	# Large soft colour patches (dry/lush ground) and mud in river beds.
+	var patch := _noise.get_noise_2d(a.x * 0.045 + 300.0, a.z * 0.045 - 120.0)
+	col = col.darkened(clampf(patch * 1.6, 0.0, 0.22)) if patch > 0.0 else col.lightened(clampf(-patch * 0.9, 0.0, 0.12))
+	if cfg.has("river") and avg < float(cfg["river"]["level"]) + 0.5:
+		col = col.lerp(Color(0.42, 0.36, 0.26), 0.85)
 	var jitter := _noise.get_noise_2d(a.x * 7.0, a.z * 7.0) * 0.06
 	col = Color(col.r + jitter, col.g + jitter, col.b + jitter)
 	for v in [a, b, c]:

@@ -4,6 +4,7 @@ extends Interactable
 
 @export var radius := 3.5
 @export var water_color := Color(0.25, 0.55, 0.7, 0.85)
+@export var show_disc := true
 
 var _ready_at_ms := 0
 
@@ -14,6 +15,8 @@ func _ready() -> void:
 	add_to_group("water")
 	add_sphere_shape(radius)
 
+	if not show_disc:
+		return
 	var disc := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = radius

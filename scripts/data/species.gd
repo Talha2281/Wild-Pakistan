@@ -72,6 +72,36 @@ const DB := {
 		"vision": 22.0, "hunts": ["marmot"], "threat_to": [], "territorial": 10.0,
 		"climb": 50.0, "herd": false, "alert": "bear_growl", "meat": 100.0,
 	},
+	"wild_boar": {
+		"predator": false, "diet": "omnivore", "hp": 6.0, "walk": 2.0, "run": 8.0,
+		"vision": 16.0, "hunts": [], "threat_to": [], "territorial": 6.0,
+		"climb": 48.0, "herd": true, "alert": "bear_growl", "meat": 70.0,
+	},
+	"jackal": {
+		"predator": true, "diet": "carnivore", "hp": 3.0, "walk": 2.6, "run": 9.2,
+		"vision": 28.0, "hunts": ["hare", "lizard", "marmot"], "threat_to": ["chinkara"], "territorial": 0.0,
+		"climb": 52.0, "herd": false, "alert": "howl", "meat": 30.0,
+	},
+	"striped_hyena": {
+		"predator": true, "diet": "carnivore", "hp": 6.0, "walk": 2.4, "run": 9.5,
+		"vision": 30.0, "hunts": ["hare", "jackal"], "threat_to": ["chinkara"], "territorial": 0.0,
+		"climb": 55.0, "herd": false, "alert": "howl", "meat": 60.0,
+	},
+	"urial": {
+		"predator": false, "diet": "herbivore", "hp": 4.0, "walk": 2.0, "run": 9.0,
+		"vision": 30.0, "hunts": [], "threat_to": [], "territorial": 0.0,
+		"climb": 70.0, "herd": true, "alert": "bleat", "meat": 55.0,
+	},
+	"marco_polo": {
+		"predator": false, "diet": "herbivore", "hp": 5.0, "walk": 2.0, "run": 8.5,
+		"vision": 32.0, "hunts": [], "threat_to": [], "territorial": 0.0,
+		"climb": 65.0, "herd": true, "alert": "bleat", "meat": 65.0,
+	},
+	"musk_deer": {
+		"predator": false, "diet": "herbivore", "hp": 2.0, "walk": 1.8, "run": 10.0,
+		"vision": 24.0, "hunts": [], "threat_to": [], "territorial": 0.0,
+		"climb": 70.0, "herd": false, "alert": "snort", "meat": 30.0,
+	},
 }
 
 

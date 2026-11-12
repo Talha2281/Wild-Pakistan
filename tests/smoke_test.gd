@@ -16,7 +16,7 @@ var _gs: Node
 
 
 func _ready() -> void:
-	_run()
+	_run.call_deferred()
 
 
 func _run() -> void:

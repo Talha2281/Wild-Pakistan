@@ -19,7 +19,7 @@ const DB := {
 	"chinkara": {
 		"name": "Chinkara", "latin": "Gazella bennettii", "status": "Vulnerable (IUCN)",
 		"diet": "herbivore", "predator": false,
-		"habitats": ["thar", "ziarat"], "unlock_missions": 0,
+		"habitats": ["thar", "indus", "ziarat"], "unlock_missions": 0,
 		"max_health": 90.0, "walk": 5.0, "run": 11.5, "jump": 6.8,
 		"stamina_drain": 17.0, "hunger_rate": 0.55, "thirst_rate": 0.75,
 		"comfort": [6.0, 40.0], "climb_angle": 46.0,
@@ -38,7 +38,7 @@ const DB := {
 	"markhor": {
 		"name": "Suleiman Markhor", "latin": "Capra falconeri jerdoni", "status": "Near Threatened (species)",
 		"diet": "herbivore", "predator": false,
-		"habitats": ["ziarat", "northern"], "unlock_missions": 3,
+		"habitats": ["ziarat", "deosai", "northern"], "unlock_missions": 3,
 		"max_health": 110.0, "walk": 4.6, "run": 9.5, "jump": 7.2,
 		"stamina_drain": 15.0, "hunger_rate": 0.5, "thirst_rate": 0.55,
 		"comfort": [-14.0, 30.0], "climb_angle": 78.0,
@@ -57,7 +57,7 @@ const DB := {
 	"snow_leopard": {
 		"name": "Snow Leopard", "latin": "Panthera uncia", "status": "Vulnerable (IUCN)",
 		"diet": "carnivore", "predator": true,
-		"habitats": ["northern"], "unlock_missions": 8,
+		"habitats": ["northern", "deosai"], "unlock_missions": 8,
 		"max_health": 100.0, "walk": 5.4, "run": 12.5, "jump": 8.2,
 		"stamina_drain": 20.0, "hunger_rate": 0.7, "thirst_rate": 0.5,
 		"comfort": [-36.0, 24.0], "climb_angle": 72.0,
@@ -76,7 +76,7 @@ const DB := {
 	"brown_bear": {
 		"name": "Himalayan Brown Bear", "latin": "Ursus arctos isabellinus", "status": "Critically endangered in Pakistan",
 		"diet": "omnivore", "predator": true,
-		"habitats": ["northern", "ziarat"], "unlock_missions": 12,
+		"habitats": ["northern", "ziarat", "deosai"], "unlock_missions": 12,
 		"max_health": 160.0, "walk": 4.2, "run": 9.0, "jump": 5.2,
 		"stamina_drain": 22.0, "hunger_rate": 0.6, "thirst_rate": 0.6,
 		"comfort": [-30.0, 28.0], "climb_angle": 50.0,
@@ -99,7 +99,7 @@ const DB := {
 const RANGER := {
 	"name": "Wildlife Ranger", "latin": "Homo sapiens", "status": "Protector of the wild",
 	"diet": "human", "predator": false, "human": true, "photographer": true,
-	"habitats": ["thar", "ziarat", "northern"], "unlock_missions": 0,
+	"habitats": ["thar", "indus", "ziarat", "deosai", "northern"], "unlock_missions": 0,
 	"max_health": 120.0, "walk": 4.6, "run": 8.6, "jump": 5.6,
 	"stamina_drain": 14.0, "hunger_rate": 0.18, "thirst_rate": 0.4,
 	"comfort": [-12.0, 36.0], "climb_angle": 50.0,
