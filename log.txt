@@ -1,0 +1,60 @@
+SCRIPT ERROR: Invalid call. Nonexistent function 'pose_head' in base 'GDScript'.
+          at: WildlifeAI._physics_process (res://scripts/ai/wildlife_ai.gd:115)
+SCRIPT ERROR: Cannot call method 'get_meta' on a null value.
+          at: animate (res://scripts/world/placeholder_model.gd:45)
+SCRIPT ERROR: Invalid call. Nonexistent function 'pose_head' in base 'GDScript'.
+          at: WildlifeAI._physics_process (res://scripts/ai/wildlife_ai.gd:115)
+SCRIPT ERROR: Cannot call method 'get_meta' on a null value.
+          at: animate (res://scripts/world/placeholder_model.gd:45)
+SCRIPT ERROR: Invalid call. Nonexistent function 'pose_head' in base 'GDScript'.
+          at: WildlifeAI._physics_process (res://scripts/ai/wildlife_ai.gd:115)
+SCRIPT ERROR: Cannot call method 'get_meta' on a null value.
+          at: animate (res://scripts/world/placeholder_model.gd:45)
+SCRIPT ERROR: Cannot call method 'get_meta' on a null value.
+          at: animate (res://scripts/world/placeholder_model.gd:45)
+SCRIPT ERROR: Cannot call method 'get_meta' on a null value.
+          at: animate (res://scripts/world/placeholder_model.gd:45)
+SHOTS DONE
+WARNING: 1 RID of type "Canvas" was leaked.
+     at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2483)
+WARNING: 1 RID of type "CanvasItem" was leaked.
+     at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2483)
+ERROR: Pages in use exist at exit in PagedAllocator: N20RasterizerSceneGLES323GeometryInstanceSurfaceE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: Pages in use exist at exit in PagedAllocator: N20RasterizerSceneGLES321GeometryInstanceGLES3E
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: 2 RID allocations of type 'N26RendererEnvironmentStorage11EnvironmentE' were leaked at exit.
+ERROR: 2 RID allocations of type 'N5GLES312LightStorage11ShadowAtlasE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N5GLES315ReflectionAtlasE' were leaked at exit.
+ERROR: 2 RID allocations of type 'N5GLES313LightInstanceE' were leaked at exit.
+ERROR: 2 RID allocations of type 'N5GLES35LightE' were leaked at exit.
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+ERROR: 1 RID allocations of type 'N5GLES34MeshE' were leaked at exit.
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+ERROR: 1 shaders of type SceneShaderGLES3 were never freed
+   at: ~ShaderGLES3 (drivers/gles3/shader_gles3.cpp:835)
+ERROR: 1 RID allocations of type 'N5GLES38MaterialE' were leaked at exit.
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+ERROR: 1 RID allocations of type 'N5GLES36ShaderE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N5GLES312RenderTargetE' were leaked at exit.
+ERROR: 2 RID allocations of type 'N5GLES37TextureE' were leaked at exit.
+ERROR: Texture with GL ID of 109: leaked 638400 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:79)
+ERROR: Texture with GL ID of 110: leaked 478800 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:79)
+ERROR: Buffer with GL ID of 162: leaked 80 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:110)
+ERROR: Buffer with GL ID of 163: leaked 32 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:110)
+ERROR: Buffer with GL ID of 164: leaked 12 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:110)
+ERROR: 1 RID allocations of type 'N16RendererViewport8ViewportE' were leaked at exit.
+ERROR: 3 RID allocations of type 'N17RendererSceneCull8InstanceE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N17RendererSceneCull8ScenarioE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2284)
