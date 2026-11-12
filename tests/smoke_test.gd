@@ -1,7 +1,7 @@
-extends SceneTree
+extends Node
 ## Headless smoke test. From the project folder run:
 ##
-##   godot --headless --path . -s tests/smoke_test.gd
+##   godot --headless --path . res://tests/smoke.tscn
 ##
 ## It loads every biome with every animal that can live there, simulates a few
 ## seconds of play (moving, sprinting, attacking, using abilities, interacting
@@ -15,12 +15,12 @@ var failures := 0
 var _gs: Node
 
 
-func _initialize() -> void:
+func _ready() -> void:
 	_run()
 
 
 func _run() -> void:
-	_gs = root.get_node("GameState")
+	_gs = GameState
 	_check_sounds()
 	_check_models()
 	for biome in Biomes.ORDER:
@@ -30,7 +30,7 @@ func _run() -> void:
 		await _test_level(biome, "ranger", "ranger")
 		await _test_level(biome, "ranger", "safari")
 	print("SMOKE TEST FINISHED  failures=%d" % failures)
-	quit(1 if failures > 0 else 0)
+	get_tree().quit(1 if failures > 0 else 0)
 
 
 func _fail(msg: String) -> void:
@@ -69,9 +69,9 @@ func _test_level(biome: String, animal: String, mode: String) -> void:
 	_gs.biome_id = biome
 	var scene: PackedScene = load("res://scenes/game.tscn")
 	var level := scene.instantiate()
-	root.add_child(level)
-	await process_frame
-	await process_frame
+	get_tree().root.add_child(level)
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	var player := _gs.player as PlayerAnimal
 	if player == null:
@@ -79,10 +79,10 @@ func _test_level(biome: String, animal: String, mode: String) -> void:
 		level.queue_free()
 		return
 	var cfg: Dictionary = Biomes.DB[biome]
-	var shikari_n := get_nodes_in_group("shikari").size()
+	var shikari_n := get_tree().get_nodes_in_group("shikari").size()
 	if mode == "survive" and shikari_n != int(cfg["shikari"]["count"]):
 		_fail("%s: expected %d shikari, found %d" % [biome, cfg["shikari"]["count"], shikari_n])
-	if get_nodes_in_group("animals").size() < 5:
+	if get_tree().get_nodes_in_group("animals").size() < 5:
 		_fail("%s: too few animals" % biome)
 
 	for i in FRAMES:
@@ -109,7 +109,7 @@ func _test_level(biome: String, animal: String, mode: String) -> void:
 			Input.action_release("sprint")
 			Input.action_release("move_forward")
 			_poke_interactables(player)
-		await physics_frame
+		await get_tree().physics_frame
 	for a in ["move_forward", "sprint", "attack", "ability", "jump", "photo"]:
 		Input.action_release(a)
 
@@ -121,15 +121,15 @@ func _test_level(biome: String, animal: String, mode: String) -> void:
 			_fail("%s/%s: stats not finite" % [biome, animal])
 
 	_exercise_environment(level.env)
-	await process_frame
+	await get_tree().process_frame
 	level.queue_free()
-	await process_frame
+	await get_tree().process_frame
 	_gs.terrain = null
 
 
 func _poke_interactables(player: PlayerAnimal) -> void:
 	var seen: Dictionary = {}
-	for n in get_nodes_in_group("interactable"):
+	for n in get_tree().get_nodes_in_group("interactable"):
 		var it := n as Interactable
 		if it == null:
 			continue
