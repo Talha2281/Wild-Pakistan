@@ -12,6 +12,7 @@ const ACTIONS := {
 	"jump": [KEY_SPACE],
 	"attack": [KEY_F],
 	"ability": [KEY_Q],
+	"photo": [KEY_C],
 	"pause": [KEY_ESCAPE, KEY_P],
 }
 

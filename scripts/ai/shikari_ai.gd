@@ -10,7 +10,7 @@ extends CharacterBody3D
 ##
 ## Set patrol_points, ranged and position BEFORE add_child().
 
-enum State { PATROL, LOOK_AROUND, INVESTIGATE, CHASE, RETREAT }
+enum State { PATROL, LOOK_AROUND, INVESTIGATE, CHASE, RETREAT, POACH }
 
 @export var patrol_speed := 2.4
 @export var chase_speed := 7.0
@@ -26,6 +26,14 @@ var state: State = State.PATROL
 ## 0..1. At 1.0 the Shikari commits to a chase.
 var awareness := 0.0
 var last_known := Vector3.ZERO
+
+## Poacher health. Animals and rangers can wear it down.
+var hp := 60.0
+var sedated := false
+var _poach_target: Node3D
+var _poach_cd := 0.0
+var _defending := false
+var _sedate_left := 0.0
 
 var _player: PlayerAnimal
 var _visual: Node3D
@@ -72,6 +80,10 @@ func _ready() -> void:
 		patrol_points.append(_home)
 	_target = patrol_points[0]
 	_think_timer = randf() * 0.15
+	_poach_cd = randf_range(6.0, 16.0)
+	var zone := ArrestZone.new()
+	zone.shikari = self
+	add_child(zone)
 
 
 func _physics_process(delta: float) -> void:
@@ -80,6 +92,16 @@ func _physics_process(delta: float) -> void:
 	_aim_pause = maxf(0.0, _aim_pause - delta)
 	_ignore_time = maxf(0.0, _ignore_time - delta)
 	_stun_time = maxf(0.0, _stun_time - delta)
+
+	if sedated:
+		_sedate_left -= delta
+		if _sedate_left <= 0.0:
+			sedated = false
+			_visual.rotation_degrees.z = 0.0
+			_visual.position.y = 0.0
+			_set_state(State.RETREAT)
+			_ignore_time = 14.0
+			Events.toast.emit("The poacher woke up and fled!")
 
 	if _stun_time > 0.0:
 		_decel(delta)
@@ -124,6 +146,49 @@ func stun(seconds: float) -> void:
 	_net_cd = maxf(_net_cd, seconds)
 
 
+## Damage from an animal or the player. Hurting a poacher makes him fight back.
+func take_hit(amount: float, from: Node3D) -> void:
+	if sedated:
+		return
+	hp -= amount
+	stun(0.6)
+	AudioManager.play_3d("hit", global_position)
+	if hp <= 0.0:
+		hp = 60.0
+		stun(5.0)
+		_set_state(State.RETREAT)
+		_ignore_time = 25.0
+		Events.game_event.emit("shikari_defeated")
+		Events.toast.emit("The poacher is driven off!")
+		return
+	if from is PlayerAnimal and state != State.RETREAT:
+		awareness = 1.0
+		_player = from as PlayerAnimal
+		if state != State.CHASE:
+			_begin_chase()
+
+
+## Tranquiliser dart: the poacher collapses and can be arrested.
+func sedate(seconds: float) -> void:
+	if sedated:
+		return
+	sedated = true
+	_sedate_left = seconds
+	_stun_time = seconds
+	awareness = 0.0
+	_visual.rotation_degrees.z = 80.0
+	_visual.position.y = 0.25
+	AudioManager.play_3d("hit", global_position)
+	Events.toast.emit("Dart hit! Move in and arrest the poacher before he wakes.")
+
+
+func arrest() -> void:
+	AudioManager.play_ui("combo")
+	Events.game_event.emit("arrest")
+	Events.toast.emit("Poacher arrested!  +%d" % (GameState.POINTS["arrest"] * GameState.combo))
+	queue_free()
+
+
 ## Frightened off (bear roar): runs home and ignores the player for a while.
 func scare(_from: Vector3, seconds: float) -> void:
 	awareness = 0.0
@@ -143,6 +208,7 @@ func alert_to(pos: Vector3) -> void:
 # ---------------------------------------------------------------- perception
 
 func _think(dt: float) -> void:
+	_think_poach(dt)
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as PlayerAnimal
 		if _player == null:
@@ -193,6 +259,84 @@ func _think(dt: float) -> void:
 			elif _state_time > give_up_time:
 				_end_chase(false)
 				_set_state(State.RETREAT)
+
+
+## Poachers shoot unprotected animals when they think nobody is watching, and defend
+## themselves against predators that come too close.
+func _think_poach(dt: float) -> void:
+	_poach_cd -= dt
+	if state != State.PATROL and state != State.LOOK_AROUND:
+		return
+	if awareness >= 0.4:
+		return
+	# self-defence first
+	var danger := _nearest_in_group("predators", 9.0)
+	if danger != null:
+		_poach_target = danger
+		_defending = true
+		_set_state(State.POACH)
+		return
+	if _poach_cd > 0.0:
+		return
+	var prey := _nearest_in_group("animals", 28.0, true)
+	if prey != null:
+		_poach_target = prey
+		_defending = false
+		_poach_cd = randf_range(20.0, 38.0)
+		_set_state(State.POACH)
+
+
+func _nearest_in_group(group: StringName, max_dist: float, prey_only := false) -> Node3D:
+	var best: Node3D = null
+	var best_d := max_dist
+	for n in get_tree().get_nodes_in_group(group):
+		var w := n as WildlifeAI
+		if w == null or w.dead:
+			continue
+		if prey_only and w.predator:
+			continue
+		var d := global_position.distance_to(w.global_position)
+		if d < best_d:
+			best_d = d
+			best = w
+	return best
+
+
+func _run_poach(delta: float) -> void:
+	var w := _poach_target as WildlifeAI
+	if w == null or not is_instance_valid(w) or w.dead or _state_time > 25.0:
+		_set_state(State.LOOK_AROUND)
+		return
+	var flat := _flat_dist(w.global_position)
+	var want := 6.0 if _defending else 13.0
+	if flat > want:
+		_move_toward(w.global_position, patrol_speed * 1.6, delta)
+		return
+	_decel(delta)
+	var to := w.global_position - global_position
+	rotation.y = lerp_angle(rotation.y, atan2(-to.x, -to.z), 8.0 * delta)
+	if _shot_cd > 0.0:
+		return
+	var space := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.5, w.global_position + Vector3.UP * 0.6, GameConst.LAYER_TERRAIN)
+	if not space.intersect_ray(q).is_empty():
+		return
+	_shot_cd = 3.2
+	AudioManager.play_3d("gunshot", global_position, 4.0, 0.03)
+	if randf() < (0.8 if _defending else 0.55):
+		var species_id := w.species
+		if w.take_hit(999.0, self):
+			GameState.poached += 1
+			Events.game_event.emit("animal_poached")
+			var label := Catalog.species_name(species_id)
+			Events.toast.emit("A poacher shot a %s!  (%d lost)" % [label, GameState.poached])
+			_check_limit()
+			_set_state(State.LOOK_AROUND)
+
+
+func _check_limit() -> void:
+	if GameState.mode == "ranger" and GameState.poached >= GameState.POACH_LIMIT:
+		GameState.fail_run("Too many animals were poached on your watch.")
 
 
 func _can_see(to: Vector3, dist: float, vis: float) -> bool:
@@ -299,6 +443,8 @@ func _run_state(delta: float) -> void:
 			_try_net()
 			if ranged:
 				_try_shoot()
+		State.POACH:
+			_run_poach(delta)
 		State.RETREAT:
 			_move_toward(_home, patrol_speed * 1.4, delta)
 			if _flat_dist(_home) < 2.0:

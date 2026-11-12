@@ -40,6 +40,14 @@ const MISSIONS := [
 	{"id": "no_disarm", "biome": "northern", "title": "Snow Trapline", "event": "disarm", "target": 4, "reward": 70},
 	{"id": "no_blizzard", "biome": "northern", "title": "Survive the Blizzard", "event": "storm_survived", "target": 1, "reward": 80},
 	{"id": "no_wreck", "biome": "northern", "title": "Break the Poachers", "event": "sabotage", "target": 3, "reward": 70},
+	# ---- Ranger patrol (animals: ranger)
+	{"id": "rg_arrest1", "biome": "any", "title": "First Arrest", "event": "arrest", "target": 1, "reward": 60, "animals": ["ranger"]},
+	{"id": "rg_arrest5", "biome": "any", "title": "Poacher Patrol", "event": "arrest", "target": 5, "reward": 150, "animals": ["ranger"]},
+	{"id": "rg_rescue", "biome": "any", "title": "Lifesaver", "event": "rescued", "target": 2, "reward": 90, "animals": ["ranger"]},
+	{"id": "rg_snare", "biome": "any", "title": "Clear the Traps", "event": "disarm", "target": 4, "reward": 80, "animals": ["ranger"]},
+	{"id": "rg_photo", "biome": "any", "title": "Wildlife Photographer", "event": "photo", "target": 5, "reward": 70, "animals": ["ranger"]},
+	{"id": "rg_evidence", "biome": "any", "title": "Gather Evidence", "event": "evidence", "target": 2, "reward": 80, "animals": ["ranger"]},
+	{"id": "rg_sabotage", "biome": "any", "title": "Seize the Gear", "event": "sabotage", "target": 3, "reward": 70, "animals": ["ranger"]},
 	# ---- Anywhere
 	{"id": "g_days3", "biome": "any", "title": "Survivor (3 days)", "event": "day_survived", "target": 3, "reward": 80},
 	{"id": "g_days10", "biome": "any", "title": "Seasoned Survivor (10 days)", "event": "day_survived", "target": 10, "reward": 250},
@@ -77,7 +85,7 @@ func missions_for_biome(biome: String) -> Array:
 func _offered(m: Dictionary, biome: String, animal: String) -> bool:
 	if m["biome"] != "any" and m["biome"] != biome:
 		return false
-	var cfg: Dictionary = Animals.DB[animal]
+	var cfg: Dictionary = Animals.get_cfg(animal)
 	if m.has("diets") and not (m["diets"] as Array).has(cfg["diet"]):
 		return false
 	if m.has("animals") and not (m["animals"] as Array).has(animal):

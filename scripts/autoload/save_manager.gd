@@ -36,6 +36,10 @@ func _defaults() -> Dictionary:
 		"equipped_skin": {},
 		"settings": DEFAULT_SETTINGS.duplicate(),
 		"stats": {"best_days": 0, "total_days": 0, "kills": 0, "rescues": 0, "deaths": 0},
+		"records": {"name": "", "xp": 0, "discovered": {}, "photos": 0, "best_photo": 0, "arrests": 0, "snares": 0,
+			"poachers_defeated": 0, "poached_total": 0, "fastest_rescue": 0.0, "runs": 0},
+		"boards": {},
+		"last_mode": "survive",
 		"last_animal": "chinkara",
 		"last_biome": "thar",
 	}

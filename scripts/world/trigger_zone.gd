@@ -39,7 +39,7 @@ func _on_body_entered(body: Node3D) -> void:
 	if triggered or not (body is PlayerAnimal):
 		return
 	var p := body as PlayerAnimal
-	if requires_climb > 0.0 and float(Animals.DB[p.species_id]["climb_angle"]) < requires_climb:
+	if requires_climb > 0.0 and float(Animals.get_cfg(p.species_id)["climb_angle"]) < requires_climb:
 		return
 	triggered = true
 	AudioManager.play_ui("chime", -6.0)

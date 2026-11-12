@@ -35,6 +35,8 @@ var _revive_button: Button
 var _game_over_stats: Label
 var _toast_tween: Tween
 var _info_timer := 0.0
+var _ranger_label: Label
+var _flash: ColorRect
 var _score_label: Label
 var _combo_label: Label
 var _popup_label: Label
@@ -58,6 +60,7 @@ func _ready() -> void:
 	_build_top_center()
 	_build_top_right()
 	_build_score()
+	_build_ranger_info()
 	_build_messages()
 	_build_touch_controls()
 	_build_pause_menu()
@@ -188,6 +191,35 @@ func _build_top_right() -> void:
 	_root.add_child(_mission_panel)
 
 
+func _build_ranger_info() -> void:
+	_flash = ColorRect.new()
+	_flash.color = Color(1, 1, 1, 1)
+	_flash.modulate.a = 0.0
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_flash)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	Events.photo_flash.connect(func() -> void:
+		_flash.modulate.a = 0.85
+		create_tween().tween_property(_flash, "modulate:a", 0.0, 0.35))
+	if GameState.mode == "survive":
+		return
+	_ranger_label = UiKit.label("", 20, Color(1.0, 0.85, 0.5))
+	UiKit.outlined(_ranger_label, 5)
+	_ranger_label.position = Vector2(20.0, 150.0)
+	_ranger_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_ranger_label)
+	Events.game_event.connect(func(_e: String) -> void: _refresh_ranger())
+	_refresh_ranger()
+
+
+func _refresh_ranger() -> void:
+	if _ranger_label == null:
+		return
+	var rec: Dictionary = Records.rec()
+	var lost := "Animals lost: %d/%d\n" % [GameState.poached, GameState.POACH_LIMIT] if GameState.mode == "ranger" else ""
+	_ranger_label.text = "%s%s  |  Arrests %d\nSpecies %d/%d" % [lost, Records.rank_name(), int(rec.get("arrests", 0)), Records.discovered_count(), Catalog.total_species()]
+
+
 func _build_score() -> void:
 	_score_label = UiKit.label("0", 40, Color(1.0, 0.92, 0.55), true)
 	UiKit.outlined(_score_label, 8)
@@ -275,7 +307,7 @@ func _build_touch_controls() -> void:
 	joy.offset_bottom = -30.0
 	_root.add_child(joy)
 
-	var cfg: Dictionary = Animals.DB[GameState.animal_id]
+	var cfg: Dictionary = Animals.get_cfg(GameState.animal_id)
 	var attack_label := String(cfg["attack_name"]).split(" ")[0].to_upper()
 	var ability_label := String(cfg["ability_name"]).split(" ")[-1].to_upper()
 	_place_button("interact", "ACT", 112.0, 30.0, 30.0)
@@ -283,6 +315,8 @@ func _build_touch_controls() -> void:
 	_place_button("sprint", "RUN", 90.0, 270.0, 44.0)
 	_place_button("jump", "JUMP", 88.0, 40.0, 150.0)
 	_ability_button = _place_button("ability", ability_label, 92.0, 140.0, 150.0)
+	if cfg.get("photographer", false):
+		_place_button("photo", "PHOTO", 92.0, 240.0, 150.0)
 
 
 func _place_button(action: StringName, text: String, s: float, margin_x: float, margin_y: float) -> ActionButton:
@@ -343,7 +377,10 @@ func _build_game_over() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 16)
 	center.add_child(box)
-	_game_over_title = UiKit.label("", 32, Color(1, 1, 1), true)
+	_game_over_title = UiKit.label("", 26, Color(1, 1, 1), true)
+	_game_over_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_game_over_title.custom_minimum_size = Vector2(760, 0)
+	_game_over_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_game_over_title)
 	_game_over_stats = UiKit.label("", 24, Color(1.0, 0.92, 0.55), true)
 	box.add_child(_game_over_stats)
@@ -425,6 +462,9 @@ func _on_died() -> void:
 		return
 	var days := GameState.days_survived
 	_game_over_title.text = "The wilderness claims another life.\nYou survived %d day%s." % [days, "" if days == 1 else "s"]
+	if GameState.mode != "survive":
+		var why := GameState.fail_reason if GameState.fail_reason != "" else "Patrol ended."
+		_game_over_title.text = "%s\nRank: %s   |   Arrests %d\n%s" % [why, Records.rank_name(), int(Records.rec().get("arrests", 0)), Catalog.random_lesson()]
 	GameState.bank_run()
 	var earned := GameState.banked_coins
 	var banner := ""

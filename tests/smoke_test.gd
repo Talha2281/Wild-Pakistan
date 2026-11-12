@@ -26,7 +26,9 @@ func _run() -> void:
 	for biome in Biomes.ORDER:
 		for animal in Animals.ORDER:
 			if (Animals.DB[animal]["habitats"] as Array).has(biome):
-				await _test_level(biome, animal)
+				await _test_level(biome, animal, "survive")
+		await _test_level(biome, "ranger", "ranger")
+		await _test_level(biome, "ranger", "safari")
 	print("SMOKE TEST FINISHED  failures=%d" % failures)
 	quit(1 if failures > 0 else 0)
 
@@ -60,8 +62,9 @@ func _check_models() -> void:
 	print("models ok: %d" % AnimalModel.SPECS.size())
 
 
-func _test_level(biome: String, animal: String) -> void:
-	print("--- %s / %s" % [biome, animal])
+func _test_level(biome: String, animal: String, mode: String) -> void:
+	print("--- %s / %s / %s" % [biome, animal, mode])
+	_gs.mode = mode
 	_gs.animal_id = animal
 	_gs.biome_id = biome
 	var scene: PackedScene = load("res://scenes/game.tscn")
@@ -77,7 +80,7 @@ func _test_level(biome: String, animal: String) -> void:
 		return
 	var cfg: Dictionary = Biomes.DB[biome]
 	var shikari_n := get_nodes_in_group("shikari").size()
-	if shikari_n != int(cfg["shikari"]["count"]):
+	if mode == "survive" and shikari_n != int(cfg["shikari"]["count"]):
 		_fail("%s: expected %d shikari, found %d" % [biome, cfg["shikari"]["count"], shikari_n])
 	if get_nodes_in_group("animals").size() < 5:
 		_fail("%s: too few animals" % biome)
@@ -98,12 +101,16 @@ func _test_level(biome: String, animal: String) -> void:
 			Input.action_press("jump")
 		if i == 130:
 			Input.action_release("jump")
+		if i == 110 and mode != "survive":
+			Input.action_press("photo")
+		if i == 114 and mode != "survive":
+			Input.action_release("photo")
 		if i == 150:
 			Input.action_release("sprint")
 			Input.action_release("move_forward")
 			_poke_interactables(player)
 		await physics_frame
-	for a in ["move_forward", "sprint", "attack", "ability", "jump"]:
+	for a in ["move_forward", "sprint", "attack", "ability", "jump", "photo"]:
 		Input.action_release(a)
 
 	if not is_instance_valid(player) or not player.global_position.is_finite():

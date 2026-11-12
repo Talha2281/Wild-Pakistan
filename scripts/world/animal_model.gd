@@ -124,10 +124,22 @@ static func build(id: String, tint := Color(0, 0, 0, 0)) -> Node3D:
 
 ## Collision capsule (radius, height) matching a species.
 static func capsule_size(id: String) -> Vector2:
+	if id == "ranger":
+		return Vector2(0.35, 1.75)
 	var spec: Dictionary = SPECS[id]
 	var r := clampf(float(spec["len"]) * 0.14, 0.1, 0.5)
 	var h := maxf(float(spec["h"]), r * 2.0 + 0.02)
 	return Vector2(r, h)
+
+
+## Shoulder height used to place the camera.
+static func body_height(id: String) -> float:
+	return 1.75 if id == "ranger" else float(SPECS[id]["h"])
+
+
+## Park ranger: forest-green uniform, cap, rifle-style dart gun.
+static func build_ranger(uniform: Color) -> Node3D:
+	return build_human(uniform, uniform.darkened(0.35), true)
 
 
 ## Lerps the head up/down. amount 0 = level, 1 = head to the ground.

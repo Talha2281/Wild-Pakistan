@@ -55,7 +55,12 @@ func _ready() -> void:
 	AudioManager.start_ambience(cfg["ambience"])
 	AudioManager.play_music("music_game", -14.0)
 	Events.player_died.connect(_on_player_died)
-	Events.toast.emit("%s - %s. %s" % [cfg["name"], Animals.DB[GameState.animal_id]["name"], "Find water first."])
+	if GameState.mode == "survive":
+		Events.toast.emit("%s - %s. %s" % [cfg["name"], Animals.get_cfg(GameState.animal_id)["name"], "Find water first."])
+	elif GameState.mode == "ranger":
+		Events.toast.emit("%s - Ranger Patrol. Protect the wildlife! Poachers are about." % cfg["name"])
+	else:
+		Events.toast.emit("%s - Photo Safari. Press C or PHOTO to photograph animals." % cfg["name"])
 	_run_tutorial()
 
 
@@ -228,7 +233,7 @@ func _spawn_player() -> void:
 	player.position = terrain.ground(Vector2.ZERO, 1.0)
 	add_child(player)
 
-	var h: float = AnimalModel.SPECS[GameState.animal_id]["h"]
+	var h: float = AnimalModel.body_height(GameState.animal_id)
 	var rig := CameraRig.new()
 	rig.target = player
 	rig.configure(4.8 + h * 2.2, 1.0 + h * 0.8)
@@ -273,6 +278,11 @@ func _spawn_shikari() -> void:
 	var info: Dictionary = cfg["shikari"]
 	_shikari_count = int(info["count"])
 	var ranged_count := int(info["ranged"])
+	if GameState.mode == "safari":
+		_shikari_count = 0
+	elif GameState.mode == "ranger":
+		_shikari_count += 2
+		ranged_count += 1
 	for i in _shikari_count:
 		var route: Array[Vector3] = []
 		if i == 0 and bool(cfg["camp"]):
@@ -318,7 +328,25 @@ func _orb_count() -> int:
 	return get_tree().get_nodes_in_group("orbs").size()
 
 
+func _spawn_extra_shikari() -> void:
+	var route: Array[Vector3] = []
+	var start := _far_point(45.0)
+	for k in 4:
+		var q := start + Vector2(_rng.randf_range(-35.0, 35.0), _rng.randf_range(-35.0, 35.0))
+		var limit := GameState.half_size - 12.0
+		q = Vector2(clampf(q.x, -limit, limit), clampf(q.y, -limit, limit))
+		route.append(terrain.ground(q))
+	var s := ShikariAI.new()
+	s.patrol_points = route
+	s.ranged = _rng.randf() < 0.4
+	s.shirt_color = SHIKARI_SHIRTS[_rng.randi() % SHIKARI_SHIRTS.size()]
+	s.position = route[0] + Vector3.UP * 0.5
+	add_child(s)
+
+
 func _ecosystem_tick() -> void:
+	if get_tree().get_nodes_in_group("shikari").size() < _shikari_count and _rng.randf() < 0.5:
+		_spawn_extra_shikari()
 	if _orb_count() < 34:
 		_spawn_orbs(6)
 	var counts: Dictionary = {}
@@ -372,7 +400,21 @@ func _on_player_died() -> void:
 func _run_tutorial() -> void:
 	if bool(SaveManager.setting("tutorial_done")):
 		return
-	var diet: String = Animals.DB[GameState.animal_id]["diet"]
+	var diet: String = Animals.get_cfg(GameState.animal_id)["diet"]
+	if GameState.mode != "survive":
+		var rtips: Array[String] = [
+			"Left stick moves. Drag the right side of the screen to look around.",
+			"Press DART to sedate a poacher you are facing, then walk up and ARREST him.",
+			"Press PHOTO to photograph rare animals. New species are added to your field guide.",
+			"Free trapped animals, remove snares and raid poacher camps for XP and coins.",
+			"Watch the poached counter. Too many animals lost and the patrol fails.",
+		]
+		for tip in rtips:
+			await get_tree().create_timer(6.0).timeout
+			if not is_inside_tree():
+				return
+			Events.toast.emit(tip)
+		return
 	var tips: Array[String] = [
 		"Left stick moves. Drag the right side of the screen to look around.",
 		"Watch your Hunger, Thirst and Temperature bars. Drink at water, eat plants.",

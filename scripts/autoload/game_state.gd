@@ -24,8 +24,13 @@ var player: Node3D = null
 ## Run score (resets each level). Orbs, eating, drinking, hunting and rescues feed a
 ## combo multiplier that decays if you stop collecting - the "one more run" loop.
 const COMBO_TIME := 6.0
-const POINTS := {"eat": 15, "drink": 10, "dig": 15, "hunt": 60, "disarm": 80, "rescued": 150,
+const POINTS := {"eat": 15, "drink": 10, "dig": 15, "hunt": 60, "disarm": 80, "arrest": 300, "shikari_defeated": 100, "evidence": 150, "photo_bonus": 0, "rescued": 150,
 	"sabotage": 80, "chase_escaped": 100, "shikari_lost": 70, "day_survived": 200, "storm_survived": 120}
+## "survive" = live as an animal, "ranger" = protect wildlife, "safari" = peaceful photography.
+var mode := "survive"
+var poached := 0
+var fail_reason := ""
+const POACH_LIMIT := 6
 var score := 0
 var combo := 1
 var orbs := 0
@@ -64,6 +69,8 @@ func reset_run() -> void:
 	_next_milestone = 500
 	_banked = false
 	banked_coins = 0
+	poached = 0
+	fail_reason = ""
 	best_before = int(SaveManager.data["stats"].get("best_score", 0))
 	Events.score_changed.emit(score, combo)
 
@@ -89,17 +96,21 @@ func bank_run() -> int:
 		return 0
 	_banked = true
 	SaveManager.set_stat_max("best_score", score)
+	Records.finish_run(mode, score)
 	banked_coins = score / 25
 	if banked_coins > 0:
 		SaveManager.add_coins(banked_coins)
 	return banked_coins
 
 
-func start_game(animal: String, biome: String) -> void:
-	animal_id = animal
+func start_game(animal: String, biome: String, play_mode := "survive") -> void:
+	mode = play_mode
+	animal_id = "ranger" if play_mode != "survive" else animal
 	biome_id = biome
 	days_survived = 0
-	SaveManager.data["last_animal"] = animal
+	SaveManager.data["last_mode"] = play_mode
+	if play_mode == "survive":
+		SaveManager.data["last_animal"] = animal
 	SaveManager.data["last_biome"] = biome
 	SaveManager.save_game()
 	get_tree().paused = false
@@ -114,6 +125,13 @@ func go_menu() -> void:
 	for a in ["move_left", "move_right", "move_forward", "move_back", "sprint", "jump", "interact", "attack", "ability"]:
 		Input.action_release(a)
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+## Ends a ranger run early (too many animals lost).
+func fail_run(reason: String) -> void:
+	fail_reason = reason
+	if player != null and is_instance_valid(player):
+		(player as PlayerAnimal).stats.take_damage(100000.0)
 
 
 func reload_level() -> void:

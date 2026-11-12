@@ -49,6 +49,7 @@ var _chase_lost := 0.0
 var _stuck := 0.0
 var _min_flee := 0.0
 var _territory_hunt := false
+var _shikari_hits := 0
 var _visual: Node3D
 var _player: PlayerAnimal
 var _gravity := 9.8
@@ -172,6 +173,8 @@ func _think() -> void:
 	if predator:
 		if state == State.HUNT or state == State.FEED or state == State.FLEE:
 			return
+		if _defend_vs_shikari():
+			return
 		if _territory_check(player):
 			return
 		if _hunt_cd <= 0.0:
@@ -197,6 +200,29 @@ func _think() -> void:
 			_begin_seek(State.SEEK_WATER, &"water")
 		elif hunger < 35.0 and diet != "carnivore":
 			_begin_seek(State.SEEK_FOOD, &"food_plants")
+
+
+## Strong animals fight back against poachers that come near.
+func _defend_vs_shikari() -> bool:
+	if _hunt_cd > 0.0:
+		return false
+	var best: ShikariAI = null
+	var best_d := minf(vision_range * 0.6, 16.0)
+	for n in get_tree().get_nodes_in_group("shikari"):
+		var s := n as ShikariAI
+		if s == null or s.sedated:
+			continue
+		var d := global_position.distance_to(s.global_position)
+		if d < best_d:
+			best_d = d
+			best = s
+	if best == null:
+		return false
+	target_node = best
+	_territory_hunt = false
+	_shikari_hits = 0
+	_set_state(State.HUNT)
+	return true
 
 
 ## Bears and similar: charge anything that wanders into their space.
@@ -385,6 +411,9 @@ func _run_hunt(delta: float) -> void:
 		_end_hunt(false)
 		return
 	var d := global_position.distance_to(target_node.global_position)
+	if target_node is ShikariAI and (target_node as ShikariAI).sedated:
+		_end_hunt(false)
+		return
 	_move_toward(target_node.global_position, run_speed, delta)
 
 	var player := target_node as PlayerAnimal
@@ -422,6 +451,12 @@ func _attack(t: Node3D) -> void:
 		AudioManager.play_3d("hit", t.global_position)
 		if _territory_hunt:
 			# A warning swipe, not a kill: back off and cool down.
+			_end_hunt(false)
+	elif t is ShikariAI:
+		(t as ShikariAI).take_hit(16.0 + hp * 3.0, self)
+		AudioManager.play_3d("hit", t.global_position)
+		_shikari_hits += 1
+		if _shikari_hits >= 3:
 			_end_hunt(false)
 	elif t is WildlifeAI:
 		(t as WildlifeAI).die(self)

@@ -95,6 +95,32 @@ const DB := {
 }
 
 
+## Not part of ORDER: chosen through the Ranger and Safari modes.
+const RANGER := {
+	"name": "Wildlife Ranger", "latin": "Homo sapiens", "status": "Protector of the wild",
+	"diet": "human", "predator": false, "human": true, "photographer": true,
+	"habitats": ["thar", "ziarat", "northern"], "unlock_missions": 0,
+	"max_health": 120.0, "walk": 4.6, "run": 8.6, "jump": 5.6,
+	"stamina_drain": 14.0, "hunger_rate": 0.18, "thirst_rate": 0.4,
+	"comfort": [-12.0, 36.0], "climb_angle": 50.0,
+	"ability": "burst", "ability_name": "Sprint", "ability_cd": 12.0, "ability_time": 2.5,
+	"ability_desc": "A short burst of speed to catch poachers.",
+	"attack": "tranq", "attack_name": "Dart", "attack_dmg": 0.0, "attack_range": 24.0,
+	"attack_cd": 1.3, "stun": 9.0,
+	"desc": "Protect wildlife: tranquilise poachers and arrest them, free trapped animals, remove snares, and photograph rare species.",
+	"fact": "Rangers and wildlife departments are the front line of conservation in Pakistan.",
+	"skins": [
+		{"name": "Forest Green", "color": Color(0.2, 0.42, 0.26)},
+		{"name": "Desert Khaki", "color": Color(0.62, 0.55, 0.38)},
+		{"name": "Snow Patrol", "color": Color(0.82, 0.84, 0.88)},
+	],
+}
+
+
+static func get_cfg(id: String) -> Dictionary:
+	return RANGER if id == "ranger" else DB[id]
+
+
 static func skin_color(id: String, index: int) -> Color:
-	var skins: Array = DB[id]["skins"]
+	var skins: Array = get_cfg(id)["skins"]
 	return skins[clampi(index, 0, skins.size() - 1)]["color"]

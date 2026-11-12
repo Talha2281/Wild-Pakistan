@@ -32,7 +32,7 @@ func _ready() -> void:
 
 
 func can_interact(player: PlayerAnimal) -> bool:
-	return meat > 0.0 and player.diet != "herbivore"
+	return meat > 0.0 and player.diet != "herbivore" and player.diet != "human"
 
 
 func interact(player: PlayerAnimal) -> void:

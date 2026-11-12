@@ -46,7 +46,7 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
 func _ready() -> void:
-	cfg = Animals.DB[species_id]
+	cfg = Animals.get_cfg(species_id)
 	diet = cfg["diet"]
 	is_predator = cfg["predator"]
 	add_to_group("player")
@@ -65,7 +65,10 @@ func _ready() -> void:
 	shape.position.y = cap.y * 0.5
 	add_child(shape)
 
-	_visual = AnimalModel.build(species_id, Animals.skin_color(species_id, skin_index))
+	if cfg.get("human", false):
+		_visual = AnimalModel.build_ranger(Animals.skin_color(species_id, skin_index))
+	else:
+		_visual = AnimalModel.build(species_id, Animals.skin_color(species_id, skin_index))
 	add_child(_visual)
 
 	stats = SurvivalStats.new()
@@ -110,6 +113,8 @@ func _physics_process(delta: float) -> void:
 		_use_ability()
 	if _just("attack"):
 		_do_attack()
+	if _just("photo") and cfg.get("photographer", false):
+		Photography.snap(self)
 
 	var burst := ability_time_left > 0.0
 	stats.boosted = burst
@@ -260,6 +265,9 @@ func _do_attack() -> void:
 		_impulse_time = 0.3
 	var reach: float = cfg["attack_range"]
 	var dmg: float = cfg["attack_dmg"]
+	if kind == "tranq":
+		_fire_dart(reach, float(cfg["stun"]))
+		return
 	var cone := 0.45 if kind == "pounce" else 0.3
 	var hit_any := false
 	for n in get_tree().get_nodes_in_group("animals"):
@@ -281,19 +289,51 @@ func _do_attack() -> void:
 			if diet != "herbivore" and not a.predator:
 				Events.game_event.emit("hunt")
 	var stun_time: float = cfg["stun"]
-	if stun_time > 0.0:
-		for n in get_tree().get_nodes_in_group("shikari"):
-			var s := n as ShikariAI
-			if s == null:
-				continue
-			var to := s.global_position - global_position
-			to.y = 0.0
-			if to.length() <= reach and fwd.dot(to.normalized()) > cone:
+	for n in get_tree().get_nodes_in_group("shikari"):
+		var s := n as ShikariAI
+		if s == null:
+			continue
+		var to := s.global_position - global_position
+		to.y = 0.0
+		if to.length() <= reach and fwd.dot(to.normalized()) > cone:
+			if stun_time > 0.0:
 				s.stun(stun_time)
-				hit_any = true
-				Events.toast.emit("The Shikari is stunned!")
+			s.take_hit(maxf(dmg, 1.0) * 10.0, self)
+			hit_any = true
+			Events.toast.emit("You hit the Shikari!")
 	if hit_any:
 		AudioManager.play_3d("hit", global_position + fwd * 1.5)
+
+
+## Ranger dart gun: sedates the first poacher roughly in the line of fire.
+func _fire_dart(reach: float, sedate_time: float) -> void:
+	AudioManager.play_3d("gunshot", global_position, -6.0, 0.02)
+	var fwd := -global_transform.basis.z
+	if camera_rig != null:
+		fwd = Vector3(-sin(camera_rig.yaw), 0.0, -cos(camera_rig.yaw))
+	var best: ShikariAI = null
+	var best_score := 0.82
+	for n in get_tree().get_nodes_in_group("shikari"):
+		var s := n as ShikariAI
+		if s == null or s.sedated:
+			continue
+		var to := s.global_position - global_position
+		var dist := to.length()
+		if dist > reach or dist < 0.5:
+			continue
+		var facing := fwd.dot(Vector3(to.x, 0.0, to.z).normalized())
+		if facing > best_score:
+			best_score = facing
+			best = s
+	if best == null:
+		Events.toast.emit("Dart missed. Aim toward the poacher (face him and fire).")
+		return
+	var space := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.4, best.global_position + Vector3.UP * 1.0, GameConst.LAYER_TERRAIN)
+	if not space.intersect_ray(q).is_empty():
+		Events.toast.emit("Dart blocked by terrain.")
+		return
+	best.sedate(sedate_time)
 
 
 # ------------------------------------------------------------------ internals

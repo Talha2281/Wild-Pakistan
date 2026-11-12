@@ -115,16 +115,21 @@ func _show_main() -> void:
 	box.add_child(Control.new())
 
 	var last_a: String = _sel_animal
-	var play := UiKit.button("PLAY NOW", func() -> void: GameState.start_game(_sel_animal, _sel_biome), Vector2(380, 84))
+	var play := UiKit.button("PLAY NOW", _play_last, Vector2(380, 84))
 	UiKit.accent_button(play)
 	box.add_child(play)
-	var pick := UiKit.button("Choose animal and habitat", _show_select, Vector2(380, 60))
+	var pick := UiKit.button("Choose game mode", _show_modes, Vector2(380, 60))
 	box.add_child(pick)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	row.add_child(UiKit.button("Journal", _show_journal, Vector2(184, 56)))
-	row.add_child(UiKit.button("Settings", _show_settings, Vector2(184, 56)))
+	row.add_child(UiKit.button("My Profile", _show_profile, Vector2(184, 54)))
+	row.add_child(UiKit.button("Leaderboards", _show_boards, Vector2(184, 54)))
 	box.add_child(row)
+	var row2 := HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 10)
+	row2.add_child(UiKit.button("Journal", _show_journal, Vector2(184, 50)))
+	row2.add_child(UiKit.button("Settings", _show_settings, Vector2(184, 50)))
+	box.add_child(row2)
 	if not OS.has_feature("mobile") and not OS.has_feature("web"):
 		box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit(), Vector2(380, 50)))
 	var stats: Dictionary = SaveManager.data["stats"]
@@ -393,6 +398,224 @@ func _show_settings() -> void:
 	var back := UiKit.button("< Back", _show_main, Vector2(200, 56))
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	root.add_child(back)
+
+
+# ------------------------------------------------------------ modes & records
+
+func _play_last() -> void:
+	var last := String(SaveManager.data.get("last_mode", "survive"))
+	if last == "survive":
+		GameState.start_game(_sel_animal, _sel_biome)
+	else:
+		GameState.start_game("ranger", String(SaveManager.data.get("last_biome", "thar")), last)
+
+
+## Standard screen frame: returns the content column below a Back button and title.
+func _screen(title: String, back: Callable) -> VBoxContainer:
+	UiKit.clear(_content)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	_content.add_child(root)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.offset_left = 50.0
+	root.offset_right = -50.0
+	root.offset_top = 18.0
+	root.offset_bottom = -18.0
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 16)
+	top.add_child(UiKit.button("< Back", back, Vector2(140, 52)))
+	var l := UiKit.label(title, 36, Color(1.0, 0.93, 0.75))
+	UiKit.outlined(l, 6)
+	top.add_child(l)
+	root.add_child(top)
+	return root
+
+
+func _mode_card(title: String, blurb: String, color: Color, callback: Callable) -> Control:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", UiKit.flat(color, 18, Color(1, 1, 1, 0.35)))
+	card.custom_minimum_size = Vector2(340, 330)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 12)
+	card.add_child(v)
+	var t := UiKit.label(title, 30, Color(1, 1, 1), true)
+	UiKit.outlined(t, 5)
+	v.add_child(t)
+	var b := UiKit.label(blurb, 18, Color(0.97, 0.97, 0.92), true)
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.custom_minimum_size = Vector2(300, 150)
+	v.add_child(b)
+	var go := UiKit.button("PLAY", callback, Vector2(220, 60))
+	UiKit.accent_button(go)
+	go.add_theme_font_size_override("font_size", 26)
+	go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(go)
+	return card
+
+
+func _show_modes() -> void:
+	var root := _screen("Choose how to play", _show_main)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 22)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(row)
+	row.add_child(_mode_card("Wild Life", "Live as a wild animal. Eat, drink, hide, fight back and survive the seasons while poachers hunt.", Color(0.16, 0.3, 0.2, 0.92), _show_select))
+	row.add_child(_mode_card("Ranger Patrol", "Become a wildlife ranger. Dart and arrest poachers, free trapped animals, remove snares. Lose too many animals and the patrol fails.", Color(0.28, 0.22, 0.1, 0.92), func() -> void: _show_ranger_select("ranger")))
+	row.add_child(_mode_card("Photo Safari", "A peaceful ranger walk. Photograph rare wildlife, fill your field guide and earn photo ratings.", Color(0.12, 0.24, 0.34, 0.92), func() -> void: _show_ranger_select("safari")))
+	var i := 0
+	for c in row.get_children():
+		UiKit.intro(c, 0.1 * i)
+		i += 1
+
+
+func _show_ranger_select(mode: String) -> void:
+	var root := _screen("Ranger Patrol" if mode == "ranger" else "Photo Safari", _show_modes)
+	root.add_child(UiKit.label("Rank: %s    XP: %d    Species discovered: %d / %d" % [Records.rank_name(), Records.xp(), Records.discovered_count(), Catalog.total_species()], 22, Color(1.0, 0.88, 0.4)))
+	root.add_child(UiKit.label("Pick a habitat to patrol. Controls: DART (F) sedates a poacher, ACT (E) arrests him, PHOTO (C) takes a picture.", 18))
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(col)
+	for biome in Biomes.ORDER:
+		var cfg: Dictionary = Biomes.DB[biome]
+		var locked := not SaveManager.biome_unlocked(biome)
+		var text := String(cfg["name"])
+		if locked:
+			text += "   (locked: %d missions)" % int(cfg["unlock_missions"])
+		var b := UiKit.button(text + "   -   START", func() -> void: GameState.start_game("ranger", biome, mode), Vector2(700, 66))
+		b.disabled = locked
+		col.add_child(b)
+		col.add_child(UiKit.label(cfg["desc"], 16, Color(0.85, 0.9, 0.9)))
+	var lesson := UiKit.label(Catalog.random_lesson(), 18, Color(0.7, 1.0, 0.8))
+	lesson.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(lesson)
+
+
+func _show_profile() -> void:
+	var root := _screen("My Profile", _show_main)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(col)
+
+	var name_row := HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 10)
+	name_row.add_child(UiKit.label("Name:", 24))
+	var edit := LineEdit.new()
+	edit.text = Records.player_name()
+	edit.max_length = 16
+	edit.custom_minimum_size = Vector2(260, 48)
+	edit.text_submitted.connect(func(t: String) -> void: Records.set_name_value(t))
+	edit.focus_exited.connect(func() -> void: Records.set_name_value(edit.text))
+	name_row.add_child(edit)
+	col.add_child(name_row)
+
+	col.add_child(UiKit.label("%s    (%d XP)" % [Records.rank_name(), Records.xp()], 30, Color(1.0, 0.88, 0.4)))
+	var prog := Records.rank_progress()
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(500, 26)
+	bar.max_value = maxf(float(prog["need"]), 1.0)
+	bar.value = float(prog["have"]) if int(prog["need"]) > 0 else bar.max_value
+	bar.show_percentage = false
+	col.add_child(bar)
+	if int(prog["need"]) > 0:
+		col.add_child(UiKit.label("%d XP to %s" % [int(prog["need"]) - int(prog["have"]), prog["next"]], 18, Color(0.85, 0.9, 0.9)))
+
+	var r: Dictionary = Records.rec()
+	var s: Dictionary = SaveManager.data["stats"]
+	var lines := [
+		"Coins: %d" % SaveManager.coins(),
+		"Best survival: %d days    Total days: %d    Deaths: %d" % [int(s.get("best_days", 0)), int(s.get("total_days", 0)), int(s.get("deaths", 0))],
+		"Animals rescued: %d    Snares removed: %d    Poachers arrested: %d    Poachers driven off: %d" % [int(s.get("rescues", 0)), int(r.get("snares", 0)), int(r.get("arrests", 0)), int(r.get("poachers_defeated", 0))],
+		"Photos taken: %d    Best photo: %d pts    Animals lost to poachers (all time): %d" % [int(r.get("photos", 0)), int(r.get("best_photo", 0)), int(r.get("poached_total", 0))],
+		"Fastest rescue: %s    Best score: %d    Runs played: %d" % [("%.1f s" % float(r.get("fastest_rescue", 0.0))) if float(r.get("fastest_rescue", 0.0)) > 0.0 else "none yet", int(s.get("best_score", 0)), int(r.get("runs", 0))],
+	]
+	for t in lines:
+		col.add_child(UiKit.label(t, 20))
+
+	col.add_child(UiKit.label("Field Guide  (%d / %d discovered)" % [Records.discovered_count(), Catalog.total_species()], 28, Color(1.0, 0.93, 0.75)))
+	var disc: Dictionary = Records.discovered()
+	for id in Catalog.INFO:
+		var info: Dictionary = Catalog.INFO[id]
+		if disc.has(id):
+			var stars := clampi(1 + int(disc[id]) / 25, 1, 5)
+			col.add_child(UiKit.label("%s  [%s]   best photo %d pts (%s)" % [info["name"], info["status"], int(disc[id]), "*".repeat(stars)], 18, Color(0.85, 1.0, 0.85)))
+			var f := UiKit.label(info["fact"], 15, Color(0.8, 0.85, 0.9))
+			f.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			f.custom_minimum_size = Vector2(760, 0)
+			col.add_child(f)
+		else:
+			col.add_child(UiKit.label("???  Not discovered yet. Photograph it in Ranger or Safari mode.", 18, Color(0.6, 0.6, 0.65)))
+
+
+func _show_boards() -> void:
+	var root := _screen("Leaderboards", _show_main)
+	var note := "Online board connected." if Records.online_enabled() else "Showing your personal bests. The global board turns on when an online server is configured (see docs/ONLINE_LEADERBOARD.md)."
+	var nl := UiKit.label(note, 16, Color(0.85, 0.9, 0.9))
+	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(nl)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 8)
+	root.add_child(tabs)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 6)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(body)
+	root.add_child(scroll)
+	for id in Records.BOARDS:
+		var board_id: String = id
+		var title := String(Records.BOARDS[board_id][0])
+		var b := UiKit.button(title.replace("High Score - ", ""), func() -> void: _fill_board(body, board_id), Vector2(120, 46))
+		b.add_theme_font_size_override("font_size", 15)
+		tabs.add_child(b)
+	_fill_board(body, "survival")
+
+
+func _fill_board(body: VBoxContainer, board: String) -> void:
+	UiKit.clear(body)
+	var info: Array = Records.BOARDS[board]
+	body.add_child(UiKit.label(String(info[0]), 28, Color(1.0, 0.93, 0.75)))
+	var unit: String = info[2]
+	if Records.online_enabled():
+		body.add_child(UiKit.label("Global top 20 (loading...)", 18, Color(0.85, 0.9, 0.9)))
+		Records.fetch_online(board, func(ok: bool, rows: Array) -> void:
+			if not is_instance_valid(body):
+				return
+			UiKit.clear(body)
+			body.add_child(UiKit.label(String(info[0]) + (" - Global" if ok else " - (offline, personal bests)"), 28, Color(1.0, 0.93, 0.75)))
+			if ok:
+				var rank := 1
+				for row in rows:
+					body.add_child(UiKit.label("%2d.  %-16s  %s %s" % [rank, row["name"], str(row["value"]), unit], 20))
+					rank += 1
+				if rows.is_empty():
+					body.add_child(UiKit.label("No scores yet. Be the first!", 20))
+			else:
+				_fill_local(body, board, unit))
+		return
+	_fill_local(body, board, unit)
+
+
+func _fill_local(body: VBoxContainer, board: String, unit: String) -> void:
+	var list: Array = Records.local_board(board)
+	if list.is_empty():
+		body.add_child(UiKit.label("No scores yet. Play a run to set your first record!", 20))
+	var rank := 1
+	for e in list:
+		body.add_child(UiKit.label("%2d.  %-16s  %s %s" % [rank, e["name"], str(e["value"]), unit], 20))
+		rank += 1
 
 
 # ------------------------------------------------------------------ choices
