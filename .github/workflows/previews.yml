@@ -1,0 +1,40 @@
+name: Render previews
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  previews:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install software GL + virtual display
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libgl1 mesa-utils > /dev/null
+      - name: Import project
+        run: godot --headless --import || true
+      - name: Render screenshots
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --path . -s tests/preview.gd 2>&1 | tail -60 | tee preview.log || true
+          ls -la ../previews || true
+      - name: Publish screenshots to the previews branch
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf /tmp/pv && mkdir -p /tmp/pv && cp ../previews/*.png /tmp/pv/ 2>/dev/null || true
+          cp preview.log /tmp/pv/preview.log || true
+          git config user.name "preview-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git checkout --orphan previews
+          git rm -rf -q . || true
+          cp /tmp/pv/* . || true
+          git add -A
+          git commit -q -m "previews" || true
+          git push -f origin previews
