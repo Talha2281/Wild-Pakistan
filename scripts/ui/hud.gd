@@ -175,6 +175,7 @@ func _build_top_right() -> void:
 	_root.add_child(row)
 
 	_mission_panel = PanelContainer.new()
+	_mission_panel.visible = false
 	_mission_panel.anchor_left = 1.0
 	_mission_panel.anchor_right = 1.0
 	_mission_panel.offset_left = -340.0

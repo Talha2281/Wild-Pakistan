@@ -14,9 +14,9 @@ void vertex() {
 	up_amount = NORMAL.y;
 }
 void fragment() {
-	vec3 c = COLOR.rgb * tint;
+	vec3 c = pow(COLOR.rgb, vec3(2.2)) * tint;
 	float s = snow * smoothstep(0.55, 0.85, up_amount);
-	ALBEDO = mix(c, vec3(0.93, 0.95, 1.0), s);
+	ALBEDO = mix(c, pow(vec3(0.93, 0.95, 1.0), vec3(2.2)), s);
 	ROUGHNESS = 1.0;
 }
 """

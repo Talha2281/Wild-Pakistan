@@ -24,7 +24,7 @@ const SEASON_TINT := {
 	"spring": Color(0.97, 1.05, 0.95), "summer": Color(1.05, 1.0, 0.92),
 	"autumn": Color(1.08, 0.94, 0.8), "winter": Color(0.92, 0.96, 1.02),
 }
-const SNOW_BY_SEASON := {"spring": 0.35, "summer": 0.0, "autumn": 0.35, "winter": 1.0}
+const SNOW_BY_SEASON := {"spring": 0.0, "summer": 0.0, "autumn": 0.0, "winter": 1.0}
 
 var weather := "clear"
 var intensity := 0.0

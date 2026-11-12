@@ -249,12 +249,13 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	var upper_color := base.darkened(0.05)
 	var paws: bool = spec.get("paws", false)
 	var fst := MeshBuilder.start()
-	var fpts := [Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.5, 0.02), Vector3(0.0, -leg_h * 0.78, 0.0), Vector3(0.0, -leg_h + 0.03, -0.01)]
-	MeshBuilder.curve_tube(fst, fpts, t * 0.7, t * 0.3, upper_color, leg_color, 6)
+	var up := bh * 0.45
+	var fpts := [Vector3(0.0, up, 0.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.5, 0.02), Vector3(0.0, -leg_h * 0.78, 0.0), Vector3(0.0, -leg_h + 0.03, -0.01)]
+	MeshBuilder.curve_tube(fst, fpts, t * 1.25, t * 0.32, upper_color, leg_color, 7)
 	_add_foot(fst, Vector3(0.0, -leg_h + 0.03, -0.01), t, paws, dark)
 	var bst := MeshBuilder.start()
-	var bpts := [Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.42, -t * 1.4), Vector3(0.0, -leg_h * 0.74, t * 1.1), Vector3(0.0, -leg_h + 0.03, 0.0)]
-	MeshBuilder.curve_tube(bst, bpts, t * 0.85, t * 0.3, upper_color, leg_color, 6)
+	var bpts := [Vector3(0.0, up, 0.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.42, -t * 1.4), Vector3(0.0, -leg_h * 0.74, t * 1.1), Vector3(0.0, -leg_h + 0.03, 0.0)]
+	MeshBuilder.curve_tube(bst, bpts, t * 1.5, t * 0.32, upper_color, leg_color, 7)
 	_add_foot(bst, Vector3(0.0, -leg_h + 0.03, 0.0), t, paws, dark)
 
 	var lx := bw * 0.36
