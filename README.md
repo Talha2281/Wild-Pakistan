@@ -4,7 +4,7 @@ A stylized 3D wildlife survival and conservation game for Android, built in **Go
 Play as a Pakistani animal, survive the seasons, and protect your wilderness from Shikari (poachers).
 
 ## What is in the game
-- **3 biomes:** Thar Desert, Ziarat Juniper Forest (unlock: 2 missions), Northern Mountains (unlock: 6 missions).
+- **5 biomes:** Thar Desert, Indus River Plains (2 missions, river + Indus dolphins), Ziarat Juniper Forest (3), Deosai Plains (5), Northern Mountains (7).
 - **4 playable animals:** Chinkara (start), Suleiman Markhor (3 missions), Snow Leopard (8), Himalayan Brown Bear (12). Each has its own stats, ability, attack and skins.
 - **Survival:** hunger, thirst, health, stamina and body temperature; dens and cover for shelter.
 - **Environment:** day/night cycle, four seasons, weather (clear, wind, rain, storm, snow, blizzard, sandstorm), lightning and thunder.
@@ -31,6 +31,14 @@ Loads every biome with every animal, simulates input, cycles weather and seasons
 - **Sound:** background music (menu and in-game), orb/combo chimes, and audio that restarts on the first click/tap so browsers never leave the game silent. Music volume is in Settings.
 - **Landing page (`landing/`):** a free real-time 3D scroll flythrough (Thar, Ziarat, Northern Mountains) with a PLAY button. The GitHub workflow publishes it at the site root and the game at `/game/`.
 
+## Ranger, records and leaderboards
+- **3 modes** (menu > Choose game mode): Wild Life (play an animal), Ranger Patrol (dart and arrest poachers, free trapped animals and the stranded Indus dolphin, remove snares; lose 6 animals and the patrol fails) and Photo Safari (no poachers, photograph wildlife).
+- **Poachers hunt wildlife and defend themselves**, and animals (predators and territorial ones) fight back against them. Any animal can hit a poacher.
+- **Field guide:** 19 species with conservation status; photo star ratings (framing, distance, rarity).
+- **Profile:** name, rank/XP (Trainee Ranger to Chief Warden), coins, arrests, rescues, photos, fastest rescue.
+- **Leaderboards:** local top 10 for score, ranger score, species discovered, best photo, fastest rescue and arrests. A **global** board needs a one-time free backend: see `docs/ONLINE_LEADERBOARD.md`. There is no anti-cheat.
+- **Not built yet:** a playable dolphin (the dolphin is photographed and rescued, not played).
+
 ## Export as a web game (HTML5)
 The project uses the Compatibility renderer, which is what web export requires.
 1. Editor > Manage Export Templates > Download and Install.
@@ -47,7 +55,7 @@ Thread support is off so it works on any host. Audio starts after the first clic
 5. Export APK/AAB. Package name suggestion: `pk.wildpakistan.lastwilderness`.
 
 ## Honest status
-- This code was written and statically checked (syntax, cross-references, data keys) but **has not been run in a Godot editor yet**. Expect to fix a few small runtime issues on first launch; the smoke test is designed to find them quickly.
+- The CI smoke test loads every biome in all modes headlessly; it checks for crashes, not for fun. The previews job renders screenshots to the `previews` branch. Gameplay balance of the ranger and poacher systems has not been playtested by a human.
 - Models are procedural low-poly placeholders; sounds are synthesized. See `docs/ASSET_PIPELINE.md`.
 - Ads are stubbed. Multiplayer is intentionally not built (see `docs/ROADMAP.md`).
 

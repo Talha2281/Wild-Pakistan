@@ -304,7 +304,7 @@ func _update_visuals() -> void:
 	var sun_color: Color = (_cfg["sun_color"] as Color).lerp(Color(1.0, 0.6, 0.35), warm * 0.7)
 	_sun.light_color = Color(0.55, 0.65, 0.9).lerp(sun_color, daylight)
 	var overcast := clampf(intensity * (1.0 if weather != "clear" and weather != "windy" else 0.0), 0.0, 1.0)
-	_sun.light_energy = lerpf(0.12, float(_cfg["sun_energy"]) * 0.85, daylight) * (1.0 - overcast * 0.55)
+	_sun.light_energy = lerpf(0.12, float(_cfg["sun_energy"]) * 0.7, daylight) * (1.0 - overcast * 0.55)
 
 	var top: Color = Color(0.02, 0.04, 0.1).lerp(_cfg["sky_top"], daylight)
 	var horizon: Color = Color(0.05, 0.07, 0.14).lerp((_cfg["sky_horizon"] as Color).lerp(Color(1.0, 0.65, 0.4), warm * 0.5), daylight)
@@ -322,7 +322,7 @@ func _update_visuals() -> void:
 	var fog_target: Color = w.get("fog_color", grey)
 	_env.fog_light_color = fog_base.lerp(fog_target, overcast * 0.85 if weather != "windy" else 0.0)
 	_env.fog_density = float(_cfg["fog_density"]) + float(w["fog"]) * intensity
-	_env.ambient_light_energy = lerpf(0.22, 0.62, daylight) + _flash * 2.0
+	_env.ambient_light_energy = lerpf(0.2, 0.5, daylight) + _flash * 2.0
 	_env.background_energy_multiplier = 1.0 + _flash * 1.5
 
 	GameState.visibility_mult = lerpf(1.0, float(w["vis"]), intensity) * lerpf(1.0, 0.7, night)

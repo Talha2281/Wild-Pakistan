@@ -4,73 +4,207 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wild Pakistan - The Last Wilderness</title>
+<meta name="description" content="A free 3D wildlife game. Live as Pakistan's wild animals, protect them as a ranger, photograph rare species and climb the leaderboards.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#fff7e6; --accent:#f08a24; }
+  :root { --ink:#fff7e6; --accent:#f08a24; --accent2:#ffd58a; --deep:#0c1a17; --glass:rgba(12,24,22,.55); }
   * { box-sizing:border-box; margin:0; }
-  html { scroll-behavior:auto; }
-  body { background:#101820; color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  #scene { position:fixed; inset:0; width:100%; height:100%; display:block; }
-  #track { height:600vh; }
-  #shade { position:fixed; left:0; right:0; bottom:0; height:60vh; background:linear-gradient(to top, rgba(8,12,16,.72), transparent); pointer-events:none; }
-  .panel { position:fixed; left:0; right:0; bottom:12vh; padding:0 max(24px,6vw); opacity:0; transform:translateY(24px);
-           transition:opacity .5s, transform .5s; pointer-events:none; max-width:720px; text-shadow:0 2px 18px rgba(0,0,0,.65); }
+  html { scroll-behavior:smooth; }
+  body { background:var(--deep); color:var(--ink); font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow-x:hidden; }
+  h1,h2,h3 { font-family:Fraunces,Georgia,serif; }
+  #scene { position:fixed; inset:0; width:100%; height:100%; display:block; z-index:0; }
+  #track { height:560vh; }
+  #shade { position:fixed; left:0; right:0; bottom:0; height:62vh; background:linear-gradient(to top, rgba(6,12,12,.78), transparent); pointer-events:none; z-index:1; }
+  .panel { position:fixed; left:0; right:0; bottom:11vh; margin:0 max(20px,6vw); padding:26px 30px; opacity:0; transform:translateY(26px);
+           transition:opacity .6s, transform .6s; pointer-events:none; max-width:680px; z-index:2;
+           background:var(--glass); backdrop-filter:blur(14px) saturate(1.3); -webkit-backdrop-filter:blur(14px) saturate(1.3);
+           border:1px solid rgba(255,255,255,.18); border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
   .panel.on { opacity:1; transform:none; }
-  .eyebrow { letter-spacing:.2em; text-transform:uppercase; font-size:.8rem; color:#ffd58a; }
-  h1,h2 { font-size:clamp(2.2rem,7vw,4.6rem); line-height:1.02; margin:.3em 0; font-weight:800; }
-  p { font-size:clamp(1rem,2.4vw,1.25rem); line-height:1.5; max-width:34em; }
+  .eyebrow { letter-spacing:.22em; text-transform:uppercase; font-size:.75rem; color:var(--accent2); font-weight:700; }
+  h1,h2 { font-size:clamp(2.1rem,6.4vw,4.2rem); line-height:1.02; margin:.25em 0 .3em; font-weight:800; }
+  p { font-size:clamp(1rem,2.2vw,1.18rem); line-height:1.55; max-width:36em; color:#f4ead6; }
   .tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-  .tags span { background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.25); border-radius:999px; padding:6px 12px; font-size:.85rem; }
-  .cta { display:inline-block; margin-top:22px; padding:18px 36px; border-radius:16px; background:var(--accent); color:#fff;
-         font-weight:800; font-size:1.4rem; text-decoration:none; box-shadow:0 10px 30px rgba(240,138,36,.5); pointer-events:auto;
-         animation:pulse 1.4s ease-in-out infinite; }
-  @keyframes pulse { 50% { transform:scale(1.06); } }
-  #top { position:fixed; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center;
-         padding:max(14px,env(safe-area-inset-top)) max(18px,4vw) 14px; z-index:5; }
-  #top b { letter-spacing:.12em; font-size:.95rem; text-shadow:0 2px 10px rgba(0,0,0,.6); }
-  #top a { background:var(--accent); color:#fff; text-decoration:none; font-weight:800; padding:12px 22px; border-radius:12px; }
-  #hint { position:fixed; bottom:3vh; left:50%; transform:translateX(-50%); font-size:.85rem; opacity:.8; animation:bob 1.6s ease-in-out infinite; z-index:4; }
+  .tags span { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:6px 13px; font-size:.82rem; }
+  .btn { display:inline-block; padding:16px 32px; border-radius:16px; background:var(--accent); color:#fff; font-weight:800; font-size:1.15rem;
+         text-decoration:none; box-shadow:0 10px 30px rgba(240,138,36,.45); transition:transform .2s, box-shadow .2s; pointer-events:auto; }
+  .btn:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 16px 40px rgba(240,138,36,.6); }
+  .btn.ghost { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35); box-shadow:none; }
+  .cta { margin-top:20px; animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform:scale(1.05); } }
+  #top { position:fixed; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; z-index:20;
+         padding:max(12px,env(safe-area-inset-top)) max(16px,4vw) 12px; background:linear-gradient(to bottom, rgba(6,12,12,.55), transparent); }
+  #top b { font-family:Fraunces,serif; letter-spacing:.08em; font-size:1.05rem; text-shadow:0 2px 10px rgba(0,0,0,.6); }
+  #top nav { display:flex; gap:22px; align-items:center; }
+  #top nav a { color:var(--ink); text-decoration:none; font-size:.92rem; font-weight:500; opacity:.9; }
+  #top nav a.play { background:var(--accent); font-weight:800; padding:10px 20px; border-radius:12px; opacity:1; }
+  @media (max-width:760px){ #top nav a:not(.play){ display:none; } }
+  #hint { position:fixed; bottom:3vh; left:50%; transform:translateX(-50%); font-size:.82rem; opacity:.85; animation:bob 1.6s ease-in-out infinite; z-index:4; letter-spacing:.1em; }
   @keyframes bob { 50% { transform:translate(-50%,8px); } }
-  #bar { position:fixed; left:0; top:0; height:4px; background:var(--accent); width:0; z-index:6; }
-  @media (prefers-reduced-motion:reduce){ .cta,#hint{animation:none} }
+  #bar { position:fixed; left:0; top:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0; z-index:30; }
+
+  /* ---------- content sections (scroll over the flythrough) ---------- */
+  #content { position:relative; z-index:10; background:linear-gradient(#0c1a17,#102420 40%,#0c1a17); box-shadow:0 -40px 80px rgba(0,0,0,.5); }
+  section.block { max-width:1160px; margin:0 auto; padding:clamp(56px,9vw,110px) max(20px,5vw); }
+  section.block h2 { font-size:clamp(1.9rem,5vw,3.2rem); }
+  .lead { font-size:clamp(1.05rem,2.3vw,1.3rem); max-width:44em; color:#e8dcc4; }
+  .reveal { opacity:0; transform:translateY(34px); transition:opacity .8s, transform .8s; }
+  .reveal.in { opacity:1; transform:none; }
+  .grid { display:grid; gap:18px; margin-top:34px; }
+  .g3 { grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .g4 { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+  .card { background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.12); border-radius:22px;
+          padding:24px; transition:transform .25s, border-color .25s, background .25s; }
+  .card:hover { transform:translateY(-6px); border-color:rgba(255,213,138,.5); background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04)); }
+  .card h3 { font-size:1.35rem; margin:10px 0 8px; }
+  .card p { font-size:.98rem; color:#e3d6bd; }
+  .ic { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-weight:800; font-family:Fraunces,serif; font-size:1.3rem; color:#10201c;
+        background:linear-gradient(135deg,#ffd58a,#f08a24); }
+  .mode { position:relative; overflow:hidden; min-height:300px; display:flex; flex-direction:column; }
+  .mode .pill { align-self:flex-start; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; padding:5px 12px; border-radius:999px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.25); }
+  .mode ul { margin:14px 0 0 18px; color:#e3d6bd; font-size:.95rem; line-height:1.6; }
+  .m1 { background:linear-gradient(160deg,#25452e,#142a20); } .m2 { background:linear-gradient(160deg,#5a4318,#2a2010); } .m3 { background:linear-gradient(160deg,#1c4660,#10222f); }
+  .species { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; margin-top:30px; }
+  .sp { display:flex; gap:14px; padding:16px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+  .sp i { flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-weight:800; color:#fff; font-family:Fraunces,serif; }
+  .sp b { display:block; font-size:1rem; }
+  .sp small { display:block; opacity:.8; font-size:.82rem; line-height:1.4; margin-top:4px; }
+  .st { display:inline-block; font-size:.68rem; padding:2px 8px; border-radius:99px; margin-top:6px; font-weight:700; }
+  .st.cr,.st.en { background:#8f2b2b; } .st.vu { background:#a06a1c; } .st.nt { background:#6b7a2a; } .st.lc { background:#2d6b4a; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-top:34px; }
+  .stat { text-align:center; padding:26px 12px; border-radius:20px; background:rgba(240,138,36,.1); border:1px solid rgba(240,138,36,.3); }
+  .stat b { display:block; font-family:Fraunces,serif; font-size:2.6rem; color:var(--accent2); }
+  .stat span { font-size:.9rem; opacity:.9; }
+  .keys { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:26px; }
+  .keys div { background:rgba(255,255,255,.06); border-radius:14px; padding:14px 16px; font-size:.95rem; }
+  kbd { background:#f4ead6; color:#10201c; padding:2px 9px; border-radius:7px; font-weight:700; font-size:.85rem; margin-right:6px; }
+  .banner { text-align:center; padding:clamp(70px,10vw,130px) 20px; background:radial-gradient(circle at 50% 0%, rgba(240,138,36,.25), transparent 60%); }
+  .banner h2 { font-size:clamp(2.2rem,6vw,4rem); }
+  footer { text-align:center; padding:34px 20px 50px; opacity:.7; font-size:.88rem; }
+  @media (prefers-reduced-motion:reduce){ .cta,#hint{animation:none} .reveal{opacity:1;transform:none} html{scroll-behavior:auto} }
 </style>
 </head>
 <body>
 <canvas id="scene"></canvas>
 <div id="shade"></div>
 <div id="bar"></div>
-<div id="top"><b>WILD PAKISTAN</b><a href="game/">PLAY NOW</a></div>
-<div id="hint">Scroll to explore</div>
+<div id="top"><b>WILD PAKISTAN</b>
+  <nav><a href="#about">About</a><a href="#modes">Modes</a><a href="#wildlife">Wildlife</a><a href="#protect">Protect</a><a class="play" href="game/">PLAY FREE</a></nav></div>
+<div id="hint">SCROLL TO EXPLORE</div>
 <div id="track"></div>
 
-<section class="panel" data-from="0" data-to="0.2">
+<section class="panel" data-from="0" data-to="0.16">
   <div class="eyebrow">The Last Wilderness</div>
   <h1>Wild Pakistan</h1>
-  <p>Become a wild animal. Survive the heat, the cold and the poachers. Fly through three living worlds.</p>
+  <p>Live as Pakistan's wild animals. Protect them as a ranger. Fly through five living worlds and see what is at stake.</p>
+  <div class="tags"><span>Free in your browser</span><span>3D</span><span>Phone friendly</span></div>
 </section>
-<section class="panel" data-from="0.2" data-to="0.42">
-  <div class="eyebrow">Biome 1</div>
+<section class="panel" data-from="0.16" data-to="0.34">
+  <div class="eyebrow">Habitat 1 - Sindh</div>
   <h2>Thar Desert</h2>
-  <p>Race across burning dunes as a chinkara. Find water, dodge the desert fox and outrun the Shikari.</p>
+  <p>Race across burning dunes as a chinkara. Find water, dodge the desert fox and jackal, and slip past poachers.</p>
   <div class="tags"><span>Chinkara</span><span>Desert fox</span><span>Sandstorms</span></div>
 </section>
-<section class="panel" data-from="0.42" data-to="0.64">
-  <div class="eyebrow">Biome 2</div>
+<section class="panel" data-from="0.34" data-to="0.5">
+  <div class="eyebrow">Habitat 2 - Punjab and Sindh</div>
+  <h2>Indus River Plains</h2>
+  <p>A mighty river with reed beds and tamarisk. Photograph the nearly blind Indus dolphin and rescue one stranded in a drying pool.</p>
+  <div class="tags"><span>Indus dolphin</span><span>Wild boar</span><span>Striped hyena</span></div>
+</section>
+<section class="panel" data-from="0.5" data-to="0.67">
+  <div class="eyebrow">Habitat 3 - Balochistan</div>
   <h2>Ziarat Juniper Forest</h2>
   <p>Leap through ancient junipers as the Suleiman Markhor. Hide in thickets from the black bear.</p>
-  <div class="tags"><span>Markhor</span><span>Black bear</span><span>Rain and storms</span></div>
+  <div class="tags"><span>Markhor</span><span>Black bear</span><span>Urial</span></div>
 </section>
-<section class="panel" data-from="0.64" data-to="0.86">
-  <div class="eyebrow">Biome 3</div>
-  <h2>Northern Mountains</h2>
-  <p>Stalk the ridgelines as the Snow Leopard, or dig for roots as the Himalayan Brown Bear. Blizzards will test you.</p>
-  <div class="tags"><span>Snow Leopard</span><span>Brown bear</span><span>Blizzards</span></div>
+<section class="panel" data-from="0.67" data-to="0.86">
+  <div class="eyebrow">Habitats 4 and 5 - Gilgit-Baltistan</div>
+  <h2>Deosai and the Northern Mountains</h2>
+  <p>Roam the Land of Giants as a brown bear, then stalk the ridgelines as a snow leopard. Blizzards will test you.</p>
+  <div class="tags"><span>Brown bear</span><span>Snow leopard</span><span>Marco Polo sheep</span></div>
 </section>
-<section class="panel" data-from="0.86" data-to="1.01">
-  <div class="eyebrow">Free to play in your browser</div>
+<section class="panel" data-from="0.86" data-to="1.5">
+  <div class="eyebrow">Free to play</div>
   <h2>Ready to run?</h2>
-  <p>Chain spirit orbs for huge combos, beat your best score, protect the wild.</p>
-  <a class="cta" href="game/">PLAY NOW</a>
+  <p>Chain spirit orbs, beat your best, protect the wild. Keep scrolling to learn more.</p>
+  <a class="btn cta" href="game/">PLAY NOW</a>
 </section>
+
+<main id="content">
+  <section class="block" id="about">
+    <div class="eyebrow reveal">About the game</div>
+    <h2 class="reveal">Survive as the wild. Protect it as a ranger.</h2>
+    <p class="lead reveal">Wild Pakistan is a free 3D wildlife game set in five real Pakistani habitats. Play as an animal fighting for survival against heat, cold, hunger and poachers, or take the ranger's boots, arrest poachers, free trapped animals and photograph the rarest species. Many of the animals in this game are really endangered, and every mode is built to show why they need protecting.</p>
+    <div class="grid g4">
+      <div class="card reveal"><div class="ic">5</div><h3>Real habitats</h3><p>Thar Desert, Indus River Plains, Ziarat Juniper Forest, Deosai Plains and the Northern Mountains, with seasons and weather.</p></div>
+      <div class="card reveal"><div class="ic">19</div><h3>Species</h3><p>From the Indus river dolphin to the snow leopard, each with its conservation status in your field guide.</p></div>
+      <div class="card reveal"><div class="ic">3</div><h3>Ways to play</h3><p>Wild Life, Ranger Patrol and Photo Safari. You choose what to play every time.</p></div>
+      <div class="card reveal"><div class="ic">1</div><h3>Click to play</h3><p>Runs in your browser on phone or laptop. No download, no sign-up, free.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="eyebrow reveal">Features</div>
+    <h2 class="reveal">Built to be replayed</h2>
+    <div class="grid g3">
+      <div class="card reveal"><div class="ic">S</div><h3>Real survival</h3><p>Manage health, food, water, stamina and body temperature through seasons, sandstorms, rain and blizzards.</p></div>
+      <div class="card reveal"><div class="ic">P</div><h3>Poachers with a plan</h3><p>Shikari patrol, set snares, and hunt animals with rifles. They also defend themselves, and cornered predators fight back.</p></div>
+      <div class="card reveal"><div class="ic">A</div><h3>Living animals</h3><p>Herds flee, predators hunt, bears guard their ground. Animals have natural, hand-shaped bodies and walk cycles.</p></div>
+      <div class="card reveal"><div class="ic">R</div><h3>Rewards and ranks</h3><p>Earn coins, XP and promotions from Trainee Ranger to Chief Warden. Chain spirit orbs for score combos.</p></div>
+      <div class="card reveal"><div class="ic">F</div><h3>Field guide</h3><p>Photograph wildlife for star ratings. Rare animals score higher. Fill all 19 pages of your guide.</p></div>
+      <div class="card reveal"><div class="ic">L</div><h3>Leaderboards</h3><p>Boards for high scores, species discovered, best photo and fastest rescue, plus your full profile record.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="modes">
+    <div class="eyebrow reveal">Game modes</div>
+    <h2 class="reveal">Choose how you play</h2>
+    <div class="grid g3">
+      <div class="card mode m1 reveal"><span class="pill">Survival</span><h3>Wild Life</h3><p>Become a chinkara, markhor, snow leopard or brown bear. Eat, drink, hide, fight back and survive day after day.</p>
+        <ul><li>4 playable animals, each with an ability</li><li>Missions unlock animals and habitats</li><li>Score, combos and daily survival</li></ul></div>
+      <div class="card mode m2 reveal"><span class="pill">Conservation</span><h3>Ranger Patrol</h3><p>Protect the wild. Dart poachers, arrest them, free trapped animals, remove snares and collect evidence.</p>
+        <ul><li>Lose too many animals and the patrol fails</li><li>Earn XP, ranks and coin rewards</li><li>Learn a real conservation lesson each run</li></ul></div>
+      <div class="card mode m3 reveal"><span class="pill">Relaxed</span><h3>Photo Safari</h3><p>A peaceful walk with no poachers. Find rare wildlife, frame the shot and fill your field guide.</p>
+        <ul><li>Star ratings for framing, distance and rarity</li><li>Dolphins, bears, leopards to discover</li><li>Competes on the photo leaderboard</li></ul></div>
+    </div>
+  </section>
+
+  <section class="block" id="wildlife">
+    <div class="eyebrow reveal">Wildlife</div>
+    <h2 class="reveal">Meet the species</h2>
+    <p class="lead reveal">Every animal in the game is a real Pakistani species. Conservation status shown is from the IUCN Red List or national assessments.</p>
+    <div class="species" id="species"></div>
+  </section>
+
+  <section class="block" id="protect">
+    <div class="eyebrow reveal">Why it matters</div>
+    <h2 class="reveal">Lessons from the wild</h2>
+    <p class="lead reveal">Poaching, snares, dams, pollution and a warming climate are pushing species towards extinction. Pakistan also has success stories. The markhor recovered when villagers became its protectors. This game turns those lessons into play.</p>
+    <div class="stats">
+      <div class="stat reveal"><b>~2,000</b><span>Indus river dolphins left</span></div>
+      <div class="stat reveal"><b>&lt;400</b><span>snow leopards in Pakistan</span></div>
+      <div class="stat reveal"><b>1</b><span>national animal brought back by community conservation: the markhor</span></div>
+    </div>
+    <p class="reveal" style="margin-top:22px;opacity:.75;font-size:.9rem">Figures are approximate and change as surveys are updated. If you see wildlife crime, report it to your provincial wildlife department. Never buy skins, horns or wild pets.</p>
+  </section>
+
+  <section class="block" id="how">
+    <div class="eyebrow reveal">How to play</div>
+    <h2 class="reveal">Easy to learn</h2>
+    <div class="keys reveal">
+      <div><kbd>W A S D</kbd>Move</div><div><kbd>Shift</kbd>Run</div><div><kbd>Space</kbd>Jump</div><div><kbd>E</kbd>Drink, eat, rescue, arrest</div>
+      <div><kbd>F</kbd>Attack or dart</div><div><kbd>Q</kbd>Special ability</div><div><kbd>C</kbd>Take a photo (ranger)</div><div><kbd>Touch</kbd>On-screen joystick and buttons</div>
+    </div>
+  </section>
+
+  <div class="banner">
+    <h2 class="reveal">The wild needs a ranger.</h2>
+    <p class="reveal" style="margin:14px auto 28px;text-align:center">It takes one click. No account needed.</p>
+    <a class="btn reveal" href="game/">PLAY WILD PAKISTAN FREE</a>
+  </div>
+  <footer>Wild Pakistan - The Last Wilderness. Made with love for Pakistan's wildlife.</footer>
+</main>
 
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 <script type="module">
@@ -83,8 +217,9 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 400);
 
 const LEN = 330, WIDTH = 150;
+function riverZ(x){ return -.42*(LEN-40) + Math.sin(x*.07)*7; }
 // zone helpers: 0 desert, 1 forest, 2 mountain along -z
-const STOPS = [[0,0],[.36,.7],[.5,1.3],[.58,1.7],[.72,2.4],[1,3]];   // flight progress -> zone value
+const STOPS = [[0,0],[.3,.5],[.46,1.0],[.54,1.4],[.62,1.7],[.74,2.4],[1,3]];   // flight progress -> zone value
 function zoneOf(z) {
   const p = THREE.MathUtils.clamp(-z / (LEN-40), 0, 1);
   for (let i=1;i<STOPS.length;i++) if (p <= STOPS[i][0]) {
@@ -101,7 +236,9 @@ function height(x, z) {
   const m = THREE.MathUtils.smoothstep(t, 1.7, 2.6);
   const f = THREE.MathUtils.smoothstep(t, .8, 1.3) * (1 - m);
   const d = 1 - Math.max(f, m);
-  return dunes*d + hills*f + (hills*0.5 + ridges + Math.abs(Math.sin(x*.08 + z*.07))*14*Math.max(0,side))*m + ridges*0.3*(d+f);
+  const riverK = 1 - THREE.MathUtils.smoothstep(Math.abs(z - riverZ(x)), 5, 15);
+  const base = dunes*d + hills*f + (hills*0.5 + ridges + Math.abs(Math.sin(x*.08 + z*.07))*14*Math.max(0,side))*m + ridges*0.3*(d+f);
+  return THREE.MathUtils.lerp(base, -1.6, riverK * (1 - m));
 }
 // terrain
 const geo = new THREE.PlaneGeometry(WIDTH, LEN+80, 140, 260);
@@ -157,6 +294,49 @@ const capG = new THREE.ConeGeometry(2.2,6,5); capG.translate(0,13,0);
 const edge = (x,z)=>Math.abs(x)>26;
 scatter(peakG, new THREE.MeshLambertMaterial({color:'#6f747c', flatShading:true}), 40, LEN*.64, LEN, ()=>1.3+Math.random()*1.4, edge);
 
+
+// ---- Indus river (water ribbon, reeds, leaping dolphins)
+const wg = new THREE.PlaneGeometry(WIDTH+20, 46, 90, 10); wg.rotateX(-Math.PI/2);
+{ const p = wg.attributes.position; for (let i=0;i<p.count;i++){ p.setZ(i, p.getZ(i) + riverZ(p.getX(i))); p.setY(i, -0.35); } wg.computeVertexNormals(); }
+const waterMat = new THREE.MeshPhongMaterial({ color:'#2f8fa6', transparent:true, opacity:.82, shininess:90, specular:0xcfeaf2 });
+const water = new THREE.Mesh(wg, waterMat); scene.add(water);
+const reedG = new THREE.ConeGeometry(.09, 2.3, 4); reedG.translate(0,1.15,0);
+scatter(reedG, new THREE.MeshLambertMaterial({color:'#b5b365'}), 420, LEN*.42-26, LEN*.42+26, ()=>0.8+Math.random()*0.9, (x,z)=>{ const d=Math.abs(z-riverZ(x)); return d>7.5 && d<17 && Math.abs(x)>3; });
+const dolphins = [];
+function makeDolphin(){
+  const g = new THREE.Group();
+  const grey = new THREE.MeshLambertMaterial({color:'#8d8a93'}), belly = new THREE.MeshLambertMaterial({color:'#d8c0bc'});
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1,14,10), grey); body.scale.set(1.5,.5,.5); g.add(body);
+  const under = new THREE.Mesh(new THREE.SphereGeometry(1,12,8), belly); under.scale.set(1.35,.3,.42); under.position.y=-.14; g.add(under);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(.12,1.2,8), grey); beak.rotation.z = Math.PI/2; beak.position.x = 1.9; g.add(beak);
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(.16,.5,4), grey); fin.position.set(-.1,.55,0); fin.rotation.z=-.3; g.add(fin);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(.3,1.1,6), grey); tail.rotation.z = -Math.PI/2; tail.position.x = -1.7; g.add(tail);
+  const fluke = new THREE.Mesh(new THREE.BoxGeometry(.5,.05,1.2), grey); fluke.position.x = -2.3; g.add(fluke);
+  g.scale.setScalar(1.3); scene.add(g); return g;
+}
+for (let i=0;i<3;i++){ const d = makeDolphin(); d.userData = { x0:-16+i*14, period:5.5+i*1.3, offset:i*1.9 }; dolphins.push(d); }
+
+// ---- clouds and birds
+const cloudMat = new THREE.MeshLambertMaterial({ color:0xffffff, emissive:0xffffff, emissiveIntensity:.75, fog:false, transparent:true, opacity:.92 });
+const clouds = [];
+for (let i=0;i<26;i++){
+  const c = new THREE.Group();
+  const n = 4 + (Math.random()*4|0);
+  for (let k=0;k<n;k++){ const s = new THREE.Mesh(new THREE.SphereGeometry(1,10,8), cloudMat); const r = 4 + Math.random()*5;
+    s.scale.set(r, r*.55, r*.8); s.position.set((k-n/2)*5*(.7+Math.random()*.5), Math.random()*2, (Math.random()-.5)*5); c.add(s); }
+  c.position.set((Math.random()-.5)*260, 52 + Math.random()*34, -Math.random()*LEN); c.userData.v = .8 + Math.random()*1.4;
+  scene.add(c); clouds.push(c);
+}
+const wingG = new THREE.BufferGeometry();
+wingG.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, 1.5,0,.35, 0,0,.6]),3)); wingG.computeVertexNormals();
+const birdMat = new THREE.MeshBasicMaterial({ color:0x20262b, side:THREE.DoubleSide });
+const birds = [];
+for (let i=0;i<16;i++){
+  const b = new THREE.Group(), l = new THREE.Mesh(wingG, birdMat), r = new THREE.Mesh(wingG, birdMat); r.scale.x = -1; b.add(l,r);
+  b.userData = { l, r, cx:(Math.random()-.5)*70, cz:-Math.random()*LEN, rad:10+Math.random()*18, sp:.25+Math.random()*.3, ph:Math.random()*6.28, y:22+Math.random()*16 };
+  b.scale.setScalar(1.4); scene.add(b); birds.push(b);
+}
+
 // spirit orbs along the path (nod to the game)
 const orbs = [];
 const orbG = new THREE.SphereGeometry(.5, 12, 8);
@@ -178,7 +358,7 @@ const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(-30,40,-
 const amb = new THREE.HemisphereLight(0xffffff, 0x554433, 1.1); scene.add(amb);
 scene.fog = new THREE.Fog(0xffffff, 20, 150);
 
-const SKY = [ {sky:'#f0a35a', fog:'#f2c48d', sun:'#ffcf9a', dust:'#ffd9a6'},
+const SKY = [ {sky:'#e9944a', fog:'#f2c48d', sun:'#ffcf9a', dust:'#ffd9a6'},
               {sky:'#8fc7a3', fog:'#b9dcc3', sun:'#fff2d0', dust:'#e6ffd9'},
               {sky:'#9ec5ee', fog:'#dceaf8', sun:'#ffffff', dust:'#ffffff'} ].map(o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k,new THREE.Color(v)])));
 const tmp = new THREE.Color();
@@ -189,9 +369,11 @@ function mixSky(t){
 }
 
 const panels = [...document.querySelectorAll('.panel')];
-const bar = document.getElementById('bar'), hint = document.getElementById('hint');
+const bar = document.getElementById('bar'), hint = document.getElementById('hint'), track = document.getElementById('track');
 let target = 0, prog = 0, mx = 0, my = 0;
-function onScroll(){ const max = document.documentElement.scrollHeight - innerHeight; target = max>0 ? scrollY/max : 0; }
+let pageP = 0;
+function onScroll(){ const max = track.offsetHeight - innerHeight; target = max>0 ? Math.min(1, scrollY/max) : 0;
+  const all = document.documentElement.scrollHeight - innerHeight; pageP = all>0 ? scrollY/all : 0; }
 addEventListener('scroll', onScroll, {passive:true}); onScroll();
 addEventListener('pointermove', e=>{ mx=(e.clientX/innerWidth-.5); my=(e.clientY/innerHeight-.5); });
 function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
@@ -214,15 +396,56 @@ function frame(){
   camera.rotation.z += Math.sin(prog*30)*.012;
   mixSky(zoneOf(camPos.z));
   for (const o of orbs){ o.position.y = o.userData.base + Math.sin(t*2+o.position.z)*.35; o.rotation.y += dt*2; }
+  for (const d of dolphins){
+    const u = ((t + d.userData.offset) % d.userData.period) / d.userData.period;       // 0..1 per leap
+    const k = Math.min(1, u * 3.2);                                                     // leap happens early in the cycle
+    const x = d.userData.x0 + k*9, y = -.9 + Math.sin(Math.min(1,k)*Math.PI)*3.4;
+    d.position.set(x, y, riverZ(x) + (d.userData.x0>0?2:-2));
+    d.rotation.z = Math.cos(Math.min(1,k)*Math.PI) * .75;
+    d.visible = k < 1;
+  }
+  for (const c of clouds){ c.position.x += c.userData.v*dt; if (c.position.x > 150) c.position.x = -150; }
+  for (const b of birds){ const u = b.userData, a = t*u.sp + u.ph;
+    b.position.set(u.cx + Math.cos(a)*u.rad, u.y + Math.sin(t*.9+u.ph)*1.2, u.cz + Math.sin(a)*u.rad);
+    b.rotation.y = -a; const f = Math.sin(t*9+u.ph)*.6; u.l.rotation.z = f; u.r.rotation.z = -f; }
   dust.position.z = camPos.z - 40; dust.position.x = camPos.x;
   const a = dust.geometry.attributes.position; // gentle drift
   dust.rotation.y = t*.02;
-  bar.style.width = (prog*100)+'%'; hint.style.opacity = prog<.02 ? .85 : 0;
+  bar.style.width = (pageP*100)+'%'; hint.style.opacity = prog<.02 && scrollY<80 ? .85 : 0;
   for (const p of panels) p.classList.toggle('on', prog>=+p.dataset.from && prog<+p.dataset.to);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 frame();
+
+// ---- wildlife cards
+const SP = [
+ ['Indus River Dolphin','en','Endangered','Nearly blind freshwater dolphin found only in the Indus.','#2f7d96'],
+ ['Himalayan Brown Bear','cr','Critically Endangered (Pakistan)','Only a few dozen remain, mainly on the Deosai plateau.','#7a5232'],
+ ['Snow Leopard','vu','Vulnerable','The ghost of the mountains. Fewer than about 400 in Pakistan.','#6f7b8c'],
+ ['Kashmir Musk Deer','en','Endangered','Shy forest deer hunted illegally for its scent gland.','#8a6b45'],
+ ['Suleiman Markhor','nt','Near Threatened','Pakistan\'s national animal, recovering thanks to communities.','#7d7566'],
+ ['Marco Polo Sheep','nt','Near Threatened','Longest horns of any sheep, on the high Pamir plateau.','#a89878'],
+ ['Chinkara','vu','Vulnerable','Desert gazelle of the Thar, threatened by poaching.','#b07a45'],
+ ['Spiny-tailed Lizard','vu','Vulnerable','Thar burrow dweller collected for the pet trade.','#78703f'],
+ ['Balochistan Black Bear','vu','Vulnerable','A shy bear of the Balochistan hills.','#2c2a2a'],
+ ['Punjab Urial','vu','Vulnerable','A wild sheep with a curling horn.','#9a6f4a'],
+ ['Striped Hyena','nt','Near Threatened','A night scavenger that keeps ecosystems clean.','#7a7468'],
+ ['Himalayan Ibex','lc','Least Concern','Cliff climber with long curved horns.','#6e5a46'],
+ ['Blue Sheep','lc','Least Concern','The snow leopard\'s main prey.','#6c7a86'],
+ ['Himalayan Marmot','lc','Least Concern','Hibernates half the year and whistles to warn others.','#8e7650'],
+ ['Desert Fox','lc','Least Concern','Big ears keep it cool in the Thar.','#c29a66'],
+ ['Red Fox','lc','Least Concern','A clever hunter in forests and mountains.','#b5541f'],
+ ['Golden Jackal','lc','Least Concern','Calls in groups at dusk.','#a38a5c'],
+ ['Wild Boar','lc','Least Concern','Digs the soil and helps forests regrow.','#4a3b32'],
+ ['Desert Hare','lc','Least Concern','Huge ears and a burst of speed.','#9c8566']
+];
+const sp = document.getElementById('species');
+sp.innerHTML = SP.map(([n,cl,label,fact,col])=>`<div class="sp reveal"><i style="background:${col}">${n[0]}</i><div><b>${n}</b><span class="st ${cl}">${label}</span><small>${fact}</small></div></div>`).join('');
+
+// ---- reveal on scroll
+const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.12});
+document.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transitionDelay = ((i%4)*70)+'ms'; io.observe(el); });
 </script>
 </body>
 </html>
