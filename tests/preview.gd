@@ -33,6 +33,10 @@ func _run() -> void:
 	root.add_child(menu)
 	await _wait(60)
 	_shot("menu")
+	for sc in ["_show_modes", "_show_about", "_show_profile", "_show_boards", "_show_select"]:
+		menu.call(sc)
+		await _wait(20)
+		_shot("menu" + sc)
 	menu.queue_free()
 	await _wait(3)
 	# ---- species gallery
