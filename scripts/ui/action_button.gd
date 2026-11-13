@@ -5,6 +5,8 @@ extends Control
 
 @export var action: StringName = &"interact"
 @export var label := "ACT"
+## Toggle buttons stay on after one tap (needed on laptops, where a mouse can only press one thing at a time).
+@export var toggle := false
 
 var cooldown := 1.0:
 	set(value):
@@ -47,7 +49,18 @@ func _hit(pos: Vector2) -> bool:
 	return pos.distance_to(rect.position + rect.size * 0.5) <= r * 1.1
 
 
+func clear_toggle() -> void:
+	if toggle and _down:
+		_down = false
+		Input.action_release(action)
+		queue_redraw()
+
+
 func _set_down(value: bool) -> void:
+	if toggle:
+		if not value:
+			return
+		value = not _down
 	_down = value
 	if value:
 		_press_ms = Time.get_ticks_msec()
@@ -59,6 +72,8 @@ func _set_down(value: bool) -> void:
 
 ## Keeps very short taps down for at least one physics tick so they are never missed.
 func _release() -> void:
+	if toggle:
+		return
 	var held := float(Time.get_ticks_msec() - _press_ms) / 1000.0
 	if held < 0.12:
 		await get_tree().create_timer(0.12 - held).timeout
@@ -73,6 +88,8 @@ func _draw() -> void:
 	if cooldown < 0.99:
 		draw_arc(c, r * 0.5, -PI * 0.5, -PI * 0.5 + TAU * cooldown, 32, Color(1.0, 0.85, 0.3, 0.9), r, true)
 	draw_arc(c, r - 2.0, 0.0, TAU, 40, Color(1.0, 1.0, 1.0, 0.7), 3.0, true)
+	if toggle and _down:
+		draw_arc(c, r - 6.0, 0.0, TAU, 40, Color(0.4, 1.0, 0.5, 0.95), 4.0, true)
 	var font := ThemeDB.fallback_font
 	var fs := 18
 	var ts := font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, fs)

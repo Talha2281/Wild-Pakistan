@@ -28,6 +28,7 @@ var _danger_rect: ColorRect
 var _hurt_rect: ColorRect
 var _temp_rect: ColorRect
 var _ability_button: ActionButton
+var _run_button: ActionButton
 var _pause_menu: Control
 var _game_over: Control
 var _game_over_title: Label
@@ -317,7 +318,8 @@ func _build_touch_controls() -> void:
 	var ability_label := String(cfg["ability_name"]).split(" ")[-1].to_upper()
 	_place_button("interact", "ACT", 112.0, 30.0, 30.0)
 	_place_button("attack", attack_label, 96.0, 160.0, 40.0)
-	_place_button("sprint", "RUN", 90.0, 270.0, 44.0)
+	_run_button = _place_button("sprint", "RUN", 90.0, 270.0, 44.0)
+	_run_button.toggle = true
 	_place_button("jump", "JUMP", 88.0, 40.0, 150.0)
 	_ability_button = _place_button("ability", ability_label, 92.0, 140.0, 150.0)
 	if cfg.get("photographer", false):
@@ -460,6 +462,8 @@ func _set_paused(value: bool) -> void:
 	if value:
 		for a in ["move_left", "move_right", "move_forward", "move_back", "sprint"]:
 			Input.action_release(a)
+		if _run_button != null:
+			_run_button.clear_toggle()
 
 
 func _on_died() -> void:

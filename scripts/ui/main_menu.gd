@@ -14,6 +14,8 @@ var _time := 0.0
 
 
 func _ready() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("if(window.wpReady){window.wpReady();}")
 	theme = UiKit.make_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_background()
@@ -192,12 +194,12 @@ func _show_select() -> void:
 	# ---- animal list
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 10)
-	list.custom_minimum_size = Vector2(250, 0)
+	list.custom_minimum_size = Vector2(220, 0)
 	for id in Animals.ORDER:
 		var a: Dictionary = Animals.DB[id]
 		var open := SaveManager.animal_unlocked(id)
 		var text: String = a["name"] if open else "%s\nLocked: %d missions" % [a["name"], a["unlock_missions"]]
-		var b := UiKit.button(text, func() -> void: _pick_animal(id), Vector2(250, 84))
+		var b := UiKit.button(text, func() -> void: _pick_animal(id), Vector2(220, 64))
 		b.add_theme_font_size_override("font_size", 20)
 		if id == _sel_animal:
 			b.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
@@ -209,7 +211,7 @@ func _show_select() -> void:
 
 	# ---- details
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(500, 0)
+	scroll.custom_minimum_size = Vector2(320, 0)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -220,13 +222,12 @@ func _show_select() -> void:
 	body.add_child(scroll)
 
 	info.add_child(UiKit.label(cfg["name"], 34, Color(1.0, 0.93, 0.75)))
-	info.add_child(UiKit.label("%s  |  %s" % [cfg["latin"], cfg["status"]], 16, Color(0.8, 0.85, 0.75)))
+	info.add_child(UiKit.label(String(cfg["status"]), 16, Color(0.8, 0.85, 0.75)))
 	info.add_child(UiKit.label(cfg["desc"], 20))
 	info.add_child(UiKit.label("Diet: %s   Speed: %.0f   Health: %.0f   Climb: %d deg" % [String(cfg["diet"]).capitalize(), cfg["run"], cfg["max_health"], int(cfg["climb_angle"])], 18, Color(0.85, 0.95, 0.8)))
 	info.add_child(UiKit.label("Ability - %s: %s" % [cfg["ability_name"], cfg["ability_desc"]], 18))
 	info.add_child(UiKit.label("Attack - %s" % cfg["attack_name"], 18))
-	info.add_child(UiKit.label(cfg["fact"], 16, Color(0.8, 0.85, 0.9)))
-
+	
 	if not locked:
 		info.add_child(UiKit.label("Coat", 20, Color(1.0, 0.88, 0.4)))
 		info.add_child(_skin_row())
@@ -256,7 +257,7 @@ func _show_select() -> void:
 func _make_preview(locked: bool) -> Control:
 	var container := SubViewportContainer.new()
 	container.stretch = true
-	container.custom_minimum_size = Vector2(380, 420)
+	container.custom_minimum_size = Vector2(300, 300)
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
@@ -294,14 +295,14 @@ func _make_preview(locked: bool) -> Control:
 
 
 func _skin_row() -> Control:
-	var row := HBoxContainer.new()
+	var row := HFlowContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var skins: Array = Animals.DB[_sel_animal]["skins"]
 	for i in skins.size():
 		var owned := SaveManager.owns_skin(_sel_animal, i)
 		var price: int = Animals.SKIN_PRICES[i]
 		var text: String = skins[i]["name"] if owned else "%s\n%d coins" % [skins[i]["name"], price]
-		var b := UiKit.button(text, func() -> void: _pick_skin(i), Vector2(150, 70))
+		var b := UiKit.button(text, func() -> void: _pick_skin(i), Vector2(140, 56))
 		b.add_theme_font_size_override("font_size", 16)
 		if owned and i == _sel_skin:
 			b.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
@@ -311,20 +312,20 @@ func _skin_row() -> Control:
 
 
 func _biome_row() -> Control:
-	var row := HBoxContainer.new()
+	var row := HFlowContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var habitats: Array = Animals.DB[_sel_animal]["habitats"]
 	for id in Biomes.ORDER:
 		var b_cfg: Dictionary = Biomes.DB[id]
 		var open := SaveManager.biome_unlocked(id)
 		var fits := habitats.has(id)
-		var text: String = b_cfg["name"]
 		if not fits:
-			text += "\n(not a habitat)"
-		elif not open:
+			continue
+		var text: String = b_cfg["name"]
+		if not open:
 			text += "\nLocked: %d missions" % b_cfg["unlock_missions"]
-		var b := UiKit.button(text, func() -> void: _pick_biome(id), Vector2(150, 84))
-		b.add_theme_font_size_override("font_size", 15)
+		var b := UiKit.button(text, func() -> void: _pick_biome(id), Vector2(140, 60))
+		b.add_theme_font_size_override("font_size", 16)
 		b.disabled = not (fits and open)
 		if id == _sel_biome:
 			b.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
