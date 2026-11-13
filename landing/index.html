@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wild Pakistan - The Last Wilderness</title>
 <meta name="description" content="A free 3D wildlife game. Live as Pakistan's wild animals, protect them as a ranger, photograph rare species and climb the leaderboards.">
+<link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#fff7e6; --accent:#f08a24; --accent2:#ffd58a; --deep:#0c1a17; --glass:rgba(12,24,22,.55); }
+  :root { --ink:#fff7e6; --accent:#f08a24; --accent2:#ffd58a; --deep:#0f1d16; --glass:rgba(12,24,22,.55); }
   * { box-sizing:border-box; margin:0; }
   html { scroll-behavior:smooth; }
   body { background:var(--deep); color:var(--ink); font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow-x:hidden; }
@@ -22,6 +23,8 @@
            background:var(--glass); backdrop-filter:blur(14px) saturate(1.3); -webkit-backdrop-filter:blur(14px) saturate(1.3);
            border:1px solid rgba(255,255,255,.18); border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
   .panel.on { opacity:1; transform:none; }
+  .hero-logo { border-radius:50%; box-shadow:0 10px 40px rgba(240,138,36,.45); animation:floaty 5s ease-in-out infinite; display:block; }
+  @keyframes floaty { 50% { transform:translateY(-8px); } }
   .eyebrow { letter-spacing:.22em; text-transform:uppercase; font-size:.75rem; color:var(--accent2); font-weight:700; }
   h1,h2 { font-size:clamp(2.1rem,6.4vw,4.2rem); line-height:1.02; margin:.25em 0 .3em; font-weight:800; }
   p { font-size:clamp(1rem,2.2vw,1.18rem); line-height:1.55; max-width:36em; color:#f4ead6; }
@@ -45,7 +48,7 @@
   #bar { position:fixed; left:0; top:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0; z-index:30; }
 
   /* ---------- content sections (scroll over the flythrough) ---------- */
-  #content { position:relative; z-index:10; background:linear-gradient(#0c1a17,#102420 40%,#0c1a17); box-shadow:0 -40px 80px rgba(0,0,0,.5); }
+  #content { position:relative; z-index:10; background:linear-gradient(#0f1d16,#16281d 45%,#0f1d16); box-shadow:0 -40px 80px rgba(0,0,0,.5); }
   section.block { max-width:1160px; margin:0 auto; padding:clamp(56px,9vw,110px) max(20px,5vw); }
   section.block h2 { font-size:clamp(1.9rem,5vw,3.2rem); }
   .lead { font-size:clamp(1.05rem,2.3vw,1.3rem); max-width:44em; color:#e8dcc4; }
@@ -91,45 +94,41 @@
 <canvas id="scene"></canvas>
 <div id="shade"></div>
 <div id="bar"></div>
-<div id="top"><b>WILD PAKISTAN</b>
+<div id="top"><b><img src="logo.png" alt="" width="34" height="34" style="vertical-align:middle;border-radius:50%;margin-right:10px">WILD PAKISTAN</b>
   <nav><a href="#about">About</a><a href="#modes">Modes</a><a href="#wildlife">Wildlife</a><a href="#protect">Protect</a><a class="play" href="game/">PLAY FREE</a></nav></div>
 <div id="hint">SCROLL TO EXPLORE</div>
 <div id="track"></div>
 
 <section class="panel" data-from="0" data-to="0.16">
+  <img class="hero-logo" src="logo.png" alt="Markhor on a mountain summit at sunset" width="120" height="120">
   <div class="eyebrow">The Last Wilderness</div>
   <h1>Wild Pakistan</h1>
-  <p>Live as Pakistan's wild animals. Protect them as a ranger. Fly through five living worlds and see what is at stake.</p>
-  <div class="tags"><span>Free in your browser</span><span>3D</span><span>Phone friendly</span></div>
+  <p>Live as Pakistan's wildlife. Protect it as a ranger.</p>
 </section>
 <section class="panel" data-from="0.16" data-to="0.34">
   <div class="eyebrow">Habitat 1 - Sindh</div>
   <h2>Thar Desert</h2>
-  <p>Race across burning dunes as a chinkara. Find water, dodge the desert fox and jackal, and slip past poachers.</p>
-  <div class="tags"><span>Chinkara</span><span>Desert fox</span><span>Sandstorms</span></div>
+  <p>Race across burning dunes as a chinkara.</p>
 </section>
 <section class="panel" data-from="0.34" data-to="0.5">
   <div class="eyebrow">Habitat 2 - Punjab and Sindh</div>
   <h2>Indus River Plains</h2>
-  <p>A mighty river with reed beds and tamarisk. Photograph the nearly blind Indus dolphin and rescue one stranded in a drying pool.</p>
-  <div class="tags"><span>Indus dolphin</span><span>Wild boar</span><span>Striped hyena</span></div>
+  <p>Find the nearly blind Indus dolphin.</p>
 </section>
 <section class="panel" data-from="0.5" data-to="0.67">
   <div class="eyebrow">Habitat 3 - Balochistan</div>
   <h2>Ziarat Juniper Forest</h2>
-  <p>Leap through ancient junipers as the Suleiman Markhor. Hide in thickets from the black bear.</p>
-  <div class="tags"><span>Markhor</span><span>Black bear</span><span>Urial</span></div>
+  <p>Leap through ancient junipers as the markhor.</p>
 </section>
 <section class="panel" data-from="0.67" data-to="0.86">
   <div class="eyebrow">Habitats 4 and 5 - Gilgit-Baltistan</div>
-  <h2>Deosai and the Northern Mountains</h2>
-  <p>Roam the Land of Giants as a brown bear, then stalk the ridgelines as a snow leopard. Blizzards will test you.</p>
-  <div class="tags"><span>Brown bear</span><span>Snow leopard</span><span>Marco Polo sheep</span></div>
+  <h2>Deosai and the North</h2>
+  <p>Stalk the ridgelines as a snow leopard.</p>
 </section>
 <section class="panel" data-from="0.86" data-to="1.5">
-  <div class="eyebrow">Free to play</div>
+  <div class="eyebrow">Your turn</div>
   <h2>Ready to run?</h2>
-  <p>Chain spirit orbs, beat your best, protect the wild. Keep scrolling to learn more.</p>
+  <p>Free to play. No download.</p>
   <a class="btn cta" href="game/">PLAY NOW</a>
 </section>
 
@@ -137,7 +136,7 @@
   <section class="block" id="about">
     <div class="eyebrow reveal">About the game</div>
     <h2 class="reveal">Survive as the wild. Protect it as a ranger.</h2>
-    <p class="lead reveal">Wild Pakistan is a free 3D wildlife game set in five real Pakistani habitats. Play as an animal fighting for survival against heat, cold, hunger and poachers, or take the ranger's boots, arrest poachers, free trapped animals and photograph the rarest species. Many of the animals in this game are really endangered, and every mode is built to show why they need protecting.</p>
+    <p class="lead reveal">A free 3D wildlife game set in five real Pakistani habitats. Survive as an animal, or protect them as a ranger. Many of these species are really endangered.</p>
     <div class="grid g4">
       <div class="card reveal"><div class="ic">5</div><h3>Real habitats</h3><p>Thar Desert, Indus River Plains, Ziarat Juniper Forest, Deosai Plains and the Northern Mountains, with seasons and weather.</p></div>
       <div class="card reveal"><div class="ic">19</div><h3>Species</h3><p>From the Indus river dolphin to the snow leopard, each with its conservation status in your field guide.</p></div>
@@ -182,7 +181,7 @@
   <section class="block" id="protect">
     <div class="eyebrow reveal">Why it matters</div>
     <h2 class="reveal">Lessons from the wild</h2>
-    <p class="lead reveal">Poaching, snares, dams, pollution and a warming climate are pushing species towards extinction. Pakistan also has success stories. The markhor recovered when villagers became its protectors. This game turns those lessons into play.</p>
+    <p class="lead reveal">Poaching, snares and dams push species towards extinction. The markhor came back when villagers became its protectors.</p>
     <div class="stats">
       <div class="stat reveal"><b>~2,000</b><span>Indus river dolphins left</span></div>
       <div class="stat reveal"><b>&lt;400</b><span>snow leopards in Pakistan</span></div>

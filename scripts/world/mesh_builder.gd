@@ -12,7 +12,9 @@ static func material() -> StandardMaterial3D:
 		_material.vertex_color_use_as_albedo = true
 		_material.vertex_color_is_srgb = true
 		_material.roughness = 0.95
-		_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		_material.rim_enabled = true
+		_material.rim = 0.35
+		_material.rim_tint = 0.55
 	return _material
 
 
@@ -180,6 +182,14 @@ static func curve_tube(st: SurfaceTool, pts: Array, r0: float, r1: float, color:
 		var k1 := float(i + 1) / n
 		var ce := color_end if color_end.a > 0.0 else color
 		tube(st, pts[i], pts[i + 1], lerpf(r0, r1, k0), lerpf(r0, r1, k1), color.lerp(ce, k0), color.lerp(ce, k1), sides, i == n - 1)
+
+
+## A thin tapered strand of fur. dir is the direction it grows (length = len).
+static func tuft(st: SurfaceTool, at: Vector3, dir: Vector3, len: float, thick: float, color: Color, tip: Color) -> void:
+	var mid := at + dir.normalized() * len * 0.5 + Vector3(0, -len * 0.08, 0)
+	var end := at + dir.normalized() * len + Vector3(0, -len * 0.22, 0)
+	tube(st, at, mid, thick, thick * 0.7, color, color.lerp(tip, 0.5), 3, false)
+	tube(st, mid, end, thick * 0.7, 0.0, color.lerp(tip, 0.5), tip, 3, false)
 
 
 static func finish(st: SurfaceTool) -> ArrayMesh:

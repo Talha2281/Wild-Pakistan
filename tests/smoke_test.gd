@@ -43,7 +43,7 @@ func _check_sounds() -> void:
 		"step_sand", "step_grass", "step_snow", "step_human", "drink", "eat", "dig", "jump", "swipe",
 		"hit", "trap_snap", "gunshot", "thunder", "roar", "bear_growl", "leopard_growl", "howl",
 		"snort", "fox_bark", "bleat", "whistle", "shikari_shout", "shikari_whistle", "chime",
-		"click", "bird", "music_menu", "music_game", "orb", "combo"]
+		"click", "bird", "chirp_a", "chirp_b", "cuckoo", "owl", "cricket", "frog", "eagle", "crow", "splash", "music_menu", "music_game", "orb", "combo"]
 	for n in names:
 		var s := SynthAudio.make(n)
 		if s == null or s.data.size() < 100:

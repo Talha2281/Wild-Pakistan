@@ -64,10 +64,10 @@ func _process(delta: float) -> void:
 	if fwd.length() > 0.001 and to.length() > 0.001:
 		_arrow.rotation = -fwd.signed_angle_to(to, Vector3.UP)
 	var vs := get_viewport_rect().size
-	_arrow.position = Vector2(vs.x * 0.5 - 22.0, 118.0)
+	_arrow.position = Vector2(vs.x * 0.5 - 22.0, 168.0)
 	_label.text = "%s  %d m" % [_text, int(dist)]
 	_label.size = Vector2(320, 30)
-	_label.position = Vector2(vs.x * 0.5 - 160.0, 166.0)
+	_label.position = Vector2(vs.x * 0.5 - 160.0, 214.0)
 	_label.add_theme_color_override("font_color", _color)
 	_arrow.queue_redraw()
 	if _beam != null:
@@ -113,7 +113,7 @@ func _pick(pl: PlayerAnimal) -> void:
 				_color = Color(0.6, 1.0, 0.5)
 		else:
 			group = "orbs"
-			_text = "Spirit orb - collect for score"
+			_text = "Spirit orb"
 			_color = Color(0.4, 0.95, 1.0)
 	var best: Node3D = null
 	var best_d := INF

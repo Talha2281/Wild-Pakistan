@@ -23,9 +23,12 @@ const SPECS := {
 		"tail_tip": Color(0.18, 0.12, 0.09), "neck": 1.0, "belly_light": 0.45,
 	},
 	"markhor": {
-		"color": Color(0.62, 0.58, 0.52), "len": 1.5, "h": 1.0, "w": 0.3, "horns": "markhor",
-		"horn_color": Color(0.82, 0.76, 0.62), "ears": "short", "tail": "short",
-		"beard": true, "ruff": true, "neck": 0.9, "thick": 1.15, "belly_light": 0.35,
+		"color": Color(0.5, 0.37, 0.26), "len": 1.5, "h": 1.0, "w": 0.3, "horns": "markhor",
+		"horn_color": Color(0.36, 0.3, 0.24), "ears": "short", "tail": "short",
+		"beard": true, "ruff": true, "neck": 0.9, "thick": 1.2, "belly_light": 0.0,
+		"belly_color": Color(0.17, 0.12, 0.09), "leg_color": Color(0.08, 0.06, 0.05),
+		"muzzle": Color(0.78, 0.74, 0.68), "shaggy": true, "knee_patch": true, "head": 1.1,
+		"tail_tip": Color(0.1, 0.08, 0.06),
 	},
 	"ibex": {
 		"color": Color(0.52, 0.4, 0.3), "len": 1.45, "h": 1.0, "horns": "ibex",
@@ -217,15 +220,15 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	var bl: float = L * float(spec.get("bl", 0.62))
 	var bh: float = H * float(spec.get("bh", 0.36))
 	var leg_h: float = H * float(spec.get("leg", 0.5))
-	var belly: Color = base.lightened(float(spec.get("belly_light", 0.35)))
+	var belly: Color = spec.get("belly_color", base.lightened(float(spec.get("belly_light", 0.35))))
 	var dark := Color(0.08, 0.06, 0.05)
 	var st := MeshBuilder.start()
 	var cy := leg_h + bh * 0.5
 
 	# ---- torso: chest + belly + haunch blend into one smooth form
-	MeshBuilder.ellipsoid(st, Vector3(0.0, cy, 0.0), Vector3(bw * 0.5, bh * 0.5, bl * 0.4), base, belly, Basis.IDENTITY, 12, 7)
-	MeshBuilder.ellipsoid(st, Vector3(0.0, cy + bh * 0.04, -bl * 0.25), Vector3(bw * 0.52, bh * 0.54, bl * 0.27), base, belly, Basis.IDENTITY, 12, 7)
-	MeshBuilder.ellipsoid(st, Vector3(0.0, cy + bh * 0.02, bl * 0.27), Vector3(bw * 0.5, bh * 0.52, bl * 0.26), base, belly, Basis.IDENTITY, 12, 7)
+	MeshBuilder.ellipsoid(st, Vector3(0.0, cy, 0.0), Vector3(bw * 0.5, bh * 0.5, bl * 0.4), base, belly, Basis.IDENTITY, 16, 10)
+	MeshBuilder.ellipsoid(st, Vector3(0.0, cy + bh * 0.04, -bl * 0.25), Vector3(bw * 0.52, bh * 0.54, bl * 0.27), base, belly, Basis.IDENTITY, 16, 10)
+	MeshBuilder.ellipsoid(st, Vector3(0.0, cy + bh * 0.02, bl * 0.27), Vector3(bw * 0.5, bh * 0.52, bl * 0.26), base, belly, Basis.IDENTITY, 16, 10)
 	var hump: float = spec.get("hump", 0.0)
 	if hump > 0.0:
 		MeshBuilder.ellipsoid(st, Vector3(0.0, leg_h + bh * 0.92 + H * hump * 0.3, -bl * 0.2), Vector3(bw * 0.46, H * hump * 0.8, bl * 0.2), base, Color(0, 0, 0, 0), Basis.IDENTITY, 10, 5)
@@ -245,6 +248,24 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	MeshBuilder.tube(st, neck_base, head_pos, neck_w * 0.62, neck_w * 0.38, base, base.lightened(0.04), 8, false)
 	if spec.get("ruff", false):
 		MeshBuilder.ellipsoid(st, neck_base.lerp(head_pos, 0.45) + Vector3(0.0, -0.04, 0.03), Vector3(neck_w * 0.85, neck_len * 0.5, neck_w * 0.85), belly, Color(0, 0, 0, 0), Basis.from_euler(Vector3(-theta, 0.0, 0.0)), 8, 5, 0.06)
+
+	# ---- shaggy coat: mane, chest beard and belly fringe from many thin strands
+	if spec.get("shaggy", false):
+		var fr := RandomNumberGenerator.new()
+		fr.seed = hash(id) + 7
+		var dk: Color = belly
+		for i in 70:
+			var t := fr.randf()
+			var a := fr.randf_range(-1.1, 1.1)
+			var at := neck_base.lerp(head_pos, t * 0.9) + Vector3(sin(a) * neck_w * 0.55, cos(a) * neck_w * 0.5 - neck_w * 0.1, 0.0)
+			MeshBuilder.tuft(st, at, Vector3(sin(a) * 0.5, -1.0, 0.45), H * fr.randf_range(0.14, 0.26), H * 0.012, dk.lerp(base, 0.25), dk.darkened(0.15))
+		for i in 34:
+			var zz := fr.randf_range(-bl * 0.4, bl * 0.38)
+			var sd := -1.0 if fr.randf() < 0.5 else 1.0
+			MeshBuilder.tuft(st, Vector3(sd * bw * 0.36, cy - bh * 0.28, zz), Vector3(sd * 0.25, -1.0, 0.2), H * fr.randf_range(0.1, 0.18), H * 0.011, base.lerp(dk, 0.4), dk)
+		for i in 24:
+			var zz := fr.randf_range(-bl * 0.15, bl * 0.4)
+			MeshBuilder.tuft(st, Vector3(fr.randf_range(-bw * 0.2, bw * 0.2), cy + bh * 0.5, zz), Vector3(0.0, 0.5, 1.0), H * 0.12, H * 0.012, base.lightened(0.1), base.darkened(0.1))
 
 	# ---- spots (rosettes along back and flanks)
 	if spec.has("spots"):
@@ -298,7 +319,7 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	var sl := hl * 0.5 * float(spec.get("snout", 0.5)) * 1.6
 	var muzzle: Color = spec.get("muzzle", base.darkened(0.06))
 	var hst := MeshBuilder.start()
-	MeshBuilder.ellipsoid(hst, Vector3(0.0, 0.0, -hl * 0.28), Vector3(hw * 0.5, hh * 0.52, hl * 0.52), base, belly, Basis.IDENTITY, 10, 6)
+	MeshBuilder.ellipsoid(hst, Vector3(0.0, 0.0, -hl * 0.28), Vector3(hw * 0.5, hh * 0.52, hl * 0.52), base, belly, Basis.IDENTITY, 14, 9)
 	var tip := Vector3(0.0, -hh * 0.2, -hl * 0.74 - sl)
 	MeshBuilder.tube(hst, Vector3(0.0, -hh * 0.05, -hl * 0.55), tip, hh * 0.34, hh * 0.22, base.lerp(muzzle, 0.5), muzzle, 8, false)
 	MeshBuilder.ellipsoid(hst, tip + Vector3(0.0, 0.0, 0.01), Vector3(hh * 0.2, hh * 0.15, hh * 0.14), dark, Color(0, 0, 0, 0), Basis.IDENTITY, 8, 4, 0.0)
@@ -323,10 +344,14 @@ static func _make_meshes(id: String, spec: Dictionary, base: Color) -> Dictionar
 	var fpts := [Vector3(0.0, up, 0.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.5, 0.02), Vector3(0.0, -leg_h * 0.78, 0.0), Vector3(0.0, -leg_h + 0.03, -0.01)]
 	MeshBuilder.curve_tube(fst, fpts, t * 1.25, t * 0.32, upper_color, leg_color, 7)
 	_add_foot(fst, Vector3(0.0, -leg_h + 0.03, -0.01), t, paws, dark)
+	if spec.get("knee_patch", false):
+		MeshBuilder.ellipsoid(fst, Vector3(0.0, -leg_h * 0.5, 0.02), Vector3(t * 0.62, t * 0.55, t * 0.62), Color(0.82, 0.74, 0.6), Color(0, 0, 0, 0), Basis.IDENTITY, 8, 5, 0.0)
 	var bst := MeshBuilder.start()
 	var bpts := [Vector3(0.0, up, 0.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, -leg_h * 0.42, -t * 1.4), Vector3(0.0, -leg_h * 0.74, t * 1.1), Vector3(0.0, -leg_h + 0.03, 0.0)]
 	MeshBuilder.curve_tube(bst, bpts, t * 1.5, t * 0.32, upper_color, leg_color, 7)
 	_add_foot(bst, Vector3(0.0, -leg_h + 0.03, 0.0), t, paws, dark)
+	if spec.get("knee_patch", false):
+		MeshBuilder.ellipsoid(bst, Vector3(0.0, -leg_h * 0.42, -t * 1.4), Vector3(t * 0.6, t * 0.5, t * 0.6), Color(0.82, 0.74, 0.6), Color(0, 0, 0, 0), Basis.IDENTITY, 8, 5, 0.0)
 
 	var lx := bw * 0.36
 	var lz := bl * 0.3
@@ -378,12 +403,12 @@ static func _add_horns(st: SurfaceTool, style: String, hw: float, hh: float, hl:
 					pts.append(base_p + Vector3(side * (H * 0.03 * sin(t * PI) + t * H * 0.01), t * H * 0.34, t * t * H * 0.1 + t * H * 0.02))
 				r0 = H * 0.026
 			"markhor":
-				for i in 20:
-					var t := float(i) / 19.0
-					var a := t * TAU * 1.8 * side
-					var rr := H * 0.042 * (1.0 - t * 0.3)
-					pts.append(base_p + Vector3(side * (t * H * 0.1) + cos(a) * rr * 0.9, t * H * 0.52, t * H * 0.08 + sin(a) * rr))
-				r0 = H * 0.036
+				for i in 28:
+					var t := float(i) / 27.0
+					var a := t * TAU * 1.5 * side
+					var rr := H * 0.05 * (0.6 + t * 0.7)
+					pts.append(base_p + Vector3(side * (t * H * 0.16) + cos(a) * rr * 0.9, sin(t * 1.9) * H * 0.5, t * t * H * 0.3 + sin(a) * rr))
+				r0 = H * 0.05
 				r1 = H * 0.012
 			"ibex":
 				for i in 12:

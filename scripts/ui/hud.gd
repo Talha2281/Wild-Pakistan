@@ -166,16 +166,20 @@ func _build_top_right() -> void:
 	var row := HBoxContainer.new()
 	row.anchor_left = 1.0
 	row.anchor_right = 1.0
-	row.offset_left = -330.0
+	row.offset_left = -400.0
 	row.offset_right = -12.0
 	row.offset_top = 40.0
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_theme_constant_override("separation", 8)
 	var missions_btn := UiKit.button("Missions", _toggle_missions, Vector2(150, 46))
 	missions_btn.add_theme_font_size_override("font_size", 18)
-	var pause_btn := UiKit.button("II", func() -> void: _set_paused(true), Vector2(70, 46))
+	var pause_btn := UiKit.button("Pause", func() -> void: _set_paused(true), Vector2(100, 46))
+	pause_btn.add_theme_font_size_override("font_size", 18)
+	var restart_btn := UiKit.button("Restart", func() -> void: GameState.reload_level(), Vector2(110, 46))
+	restart_btn.add_theme_font_size_override("font_size", 18)
 	row.add_child(missions_btn)
 	row.add_child(pause_btn)
+	row.add_child(restart_btn)
 	_root.add_child(row)
 
 	_mission_panel = PanelContainer.new()
@@ -280,7 +284,7 @@ func _build_messages() -> void:
 	_toast_label.anchor_right = 1.0
 	_toast_label.offset_left = 120.0
 	_toast_label.offset_right = -120.0
-	_toast_label.offset_top = 80.0
+	_toast_label.offset_top = 90.0
 	_toast_label.offset_bottom = 150.0
 	_toast_label.modulate.a = 0.0
 	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -359,7 +363,8 @@ func _build_pause_menu() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 14)
 	row.add_child(UiKit.button("Resume", func() -> void: _set_paused(false)))
-	row.add_child(UiKit.button("Main Menu", func() -> void: GameState.go_menu()))
+	row.add_child(UiKit.button("Restart", func() -> void: GameState.reload_level()))
+	row.add_child(UiKit.button("Back to Menu", func() -> void: GameState.go_menu()))
 	box.add_child(row)
 
 

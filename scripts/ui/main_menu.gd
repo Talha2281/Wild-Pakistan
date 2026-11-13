@@ -100,20 +100,25 @@ func _show_main() -> void:
 	_content.add_child(box)
 	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
 	box.offset_left = 80.0
-	box.offset_top = -270.0
+	box.offset_top = -300.0
 	box.offset_right = 620.0
-	box.offset_bottom = 270.0
+	box.offset_bottom = 300.0
 
-	var title := UiKit.label("WILD PAKISTAN", 70, Color(1.0, 0.93, 0.75))
+	var logo := load("res://assets/branding/logo.png") as Texture2D
+	if logo != null:
+		var lr := TextureRect.new()
+		lr.texture = logo
+		lr.custom_minimum_size = Vector2(150, 150)
+		lr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lr.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		box.add_child(lr)
+	var title := UiKit.label("WILD PAKISTAN", 64, Color(1.0, 0.93, 0.75))
 	UiKit.outlined(title, 10)
 	box.add_child(title)
 	var sub := UiKit.label("The Last Wilderness", 32, Color(0.95, 0.8, 0.5))
 	UiKit.outlined(sub, 6)
 	box.add_child(sub)
-	var tag := UiKit.label("Run. Hunt. Survive. Protect the wild.", 20, Color(0.85, 0.9, 0.85))
-	UiKit.outlined(tag, 4)
-	box.add_child(tag)
-	box.add_child(Control.new())
 
 	var last_a: String = _sel_animal
 	var play := UiKit.button("PLAY NOW", _play_last, Vector2(380, 84))
@@ -134,11 +139,6 @@ func _show_main() -> void:
 	box.add_child(row2)
 	if not OS.has_feature("mobile") and not OS.has_feature("web"):
 		box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit(), Vector2(380, 50)))
-	var stats: Dictionary = SaveManager.data["stats"]
-	var ver := UiKit.label("Playing as %s   |   Best score %d   |   Coins %d" % [Animals.DB[last_a]["name"], int(stats.get("best_score", 0)), SaveManager.coins()], 16, Color(0.9, 0.9, 0.8))
-	UiKit.outlined(ver, 4)
-	box.add_child(ver)
-
 	var i := 0
 	for c in box.get_children():
 		if c is Control:
@@ -239,7 +239,7 @@ func _show_select() -> void:
 	var bar := HBoxContainer.new()
 	bar.alignment = BoxContainer.ALIGNMENT_CENTER
 	bar.add_theme_constant_override("separation", 20)
-	var go := UiKit.button("START GAME", func() -> void: GameState.start_game(_sel_animal, _sel_biome), Vector2(460, 76))
+	var go := UiKit.button("START GAME", func() -> void: _go(_sel_animal, _sel_biome, "survive"), Vector2(460, 76))
 	UiKit.accent_button(go)
 	go.disabled = locked or _sel_biome == ""
 	bar.add_child(go)
@@ -406,17 +406,17 @@ func _auto_start_from_url() -> void:
 	var m = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('mode') || ''")
 	var mode := String(m) if m != null else ""
 	if mode == "survive":
-		GameState.start_game(_sel_animal, _sel_biome)
+		_go(_sel_animal, _sel_biome, "survive")
 	elif mode == "ranger" or mode == "safari":
-		GameState.start_game("ranger", String(SaveManager.data.get("last_biome", "thar")), mode)
+		_go("ranger", String(SaveManager.data.get("last_biome", "thar")), mode)
 
 
 func _play_last() -> void:
 	var last := String(SaveManager.data.get("last_mode", "survive"))
 	if last == "survive":
-		GameState.start_game(_sel_animal, _sel_biome)
+		_go(_sel_animal, _sel_biome, "survive")
 	else:
-		GameState.start_game("ranger", String(SaveManager.data.get("last_biome", "thar")), last)
+		_go("ranger", String(SaveManager.data.get("last_biome", "thar")), last)
 
 
 ## Standard screen frame: returns the content column below a Back button and title.
@@ -521,7 +521,7 @@ func _show_ranger_select(mode: String) -> void:
 		var text := String(cfg["name"])
 		if locked:
 			text += "   (locked: %d missions)" % int(cfg["unlock_missions"])
-		var b := UiKit.button(text + "   -   START", func() -> void: GameState.start_game("ranger", biome, mode), Vector2(700, 66))
+		var b := UiKit.button(text + "   -   START", func() -> void: _go("ranger", biome, mode), Vector2(700, 66))
 		b.disabled = locked
 		col.add_child(b)
 		col.add_child(UiKit.label(cfg["desc"], 16, Color(0.85, 0.9, 0.9)))
@@ -569,6 +569,15 @@ func _show_profile() -> void:
 	for t in lines:
 		col.add_child(UiKit.label(t, 20))
 
+	col.add_child(UiKit.label("Recent runs", 28, Color(1.0, 0.93, 0.75)))
+	var hist: Array = SaveManager.data.get("history", [])
+	if hist.is_empty():
+		col.add_child(UiKit.label("No runs yet.", 18, Color(0.7, 0.7, 0.7)))
+	for h in hist:
+		var when := Time.get_datetime_dict_from_unix_time(int(h.get("t", 0)))
+		var an := Animals.get_cfg(String(h.get("animal", "chinkara")))["name"]
+		var bn := String(Biomes.DB[String(h.get("biome", "thar"))]["name"]) if Biomes.DB.has(String(h.get("biome", "thar"))) else ""
+		col.add_child(UiKit.label("%02d/%02d  %s  %s  %s  score %d" % [when["day"], when["month"], String(h.get("mode", "survive")).capitalize(), an, bn, int(h.get("score", 0))], 17, Color(0.85, 0.9, 0.95)))
 	col.add_child(UiKit.label("Field Guide  (%d / %d discovered)" % [Records.discovered_count(), Catalog.total_species()], 28, Color(1.0, 0.93, 0.75)))
 	var disc: Dictionary = Records.discovered()
 	for id in Catalog.INFO:
@@ -584,58 +593,173 @@ func _show_profile() -> void:
 			col.add_child(UiKit.label("???  Not discovered yet. Photograph it in Ranger or Safari mode.", 18, Color(0.6, 0.6, 0.65)))
 
 
+var _board_id := "survival"
+var _board_body: VBoxContainer
+var _board_tabs: Dictionary = {}
+var _live_label: Label
+var _live_age := 0.0
+
+
 func _show_boards() -> void:
 	var root := _screen("Leaderboards", _show_main)
-	var note := "Online board connected." if Records.online_enabled() else "Showing your personal bests. The global board turns on when an online server is configured (see docs/ONLINE_LEADERBOARD.md)."
-	var nl := UiKit.label(note, 16, Color(0.85, 0.9, 0.9))
-	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(nl)
-	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 8)
+	var top := root.get_child(0) as HBoxContainer
+	_live_label = UiKit.label("LIVE", 18, Color(0.4, 1.0, 0.55))
+	_live_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_live_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	top.add_child(_live_label)
+	var tabs := HFlowContainer.new()
+	tabs.add_theme_constant_override("h_separation", 8)
+	tabs.add_theme_constant_override("v_separation", 8)
 	root.add_child(tabs)
-	var body := _scroll_box(root)
+	_board_tabs.clear()
 	for id in Records.BOARDS:
 		var board_id: String = id
-		var title := String(Records.BOARDS[board_id][0])
-		var b := UiKit.button(title.replace("High Score - ", ""), func() -> void: _fill_board(body, board_id), Vector2(120, 46))
-		b.add_theme_font_size_override("font_size", 15)
+		var title := String(Records.BOARDS[board_id][0]).replace("High Score - ", "")
+		var b := UiKit.button(title, func() -> void: _select_board(board_id), Vector2(120, 44))
+		b.add_theme_font_size_override("font_size", 16)
 		tabs.add_child(b)
-	_fill_board(body, "survival")
+		_board_tabs[board_id] = b
+	_board_body = _scroll_box(root)
+	var timer := Timer.new()
+	timer.wait_time = 3.0
+	timer.autostart = true
+	timer.timeout.connect(func() -> void: _refresh_board())
+	root.add_child(timer)
+	_select_board(_board_id)
 
 
-func _fill_board(body: VBoxContainer, board: String) -> void:
-	UiKit.clear(body)
-	var info: Array = Records.BOARDS[board]
-	body.add_child(UiKit.label(String(info[0]), 28, Color(1.0, 0.93, 0.75)))
-	var unit: String = info[2]
-	if Records.online_enabled():
-		body.add_child(UiKit.label("Global top 20 (loading...)", 18, Color(0.85, 0.9, 0.9)))
-		Records.fetch_online(board, func(ok: bool, rows: Array) -> void:
-			if not is_instance_valid(body):
-				return
-			UiKit.clear(body)
-			body.add_child(UiKit.label(String(info[0]) + (" - Global" if ok else " - (offline, personal bests)"), 28, Color(1.0, 0.93, 0.75)))
-			if ok:
-				var rank := 1
-				for row in rows:
-					body.add_child(UiKit.label("%2d.  %-16s  %s %s" % [rank, row["name"], str(row["value"]), unit], 20))
-					rank += 1
-				if rows.is_empty():
-					body.add_child(UiKit.label("No scores yet. Be the first!", 20))
-			else:
-				_fill_local(body, board, unit))
+func _select_board(id: String) -> void:
+	_board_id = id
+	for k in _board_tabs:
+		var btn: Button = _board_tabs[k]
+		if k == id:
+			btn.add_theme_stylebox_override("normal", UiKit.flat(Color(0.85, 0.45, 0.12, 1.0), 12, Color(1.0, 0.85, 0.4, 1.0)))
+		else:
+			btn.remove_theme_stylebox_override("normal")
+	_refresh_board()
+
+
+## Redraws the current board. Local boards update instantly after each run; with an
+## online server configured the global top 20 is re-fetched every few seconds.
+func _refresh_board() -> void:
+	if _board_body == null or not is_instance_valid(_board_body):
 		return
-	_fill_local(body, board, unit)
+	if Records.online_enabled():
+		var board := _board_id
+		Records.fetch_online(board, func(ok: bool, rows: Array) -> void:
+			if not is_instance_valid(_board_body) or board != _board_id:
+				return
+			if ok:
+				_draw_board(rows, true)
+				if _live_label != null:
+					_live_label.text = "LIVE - global, updating"
+			else:
+				_draw_board(Records.local_board(board), false))
+	else:
+		_draw_board(Records.local_board(_board_id), false)
+		if _live_label != null:
+			_live_label.text = "On this device - connect a server for global ranks"
 
 
-func _fill_local(body: VBoxContainer, board: String, unit: String) -> void:
-	var list: Array = Records.local_board(board)
-	if list.is_empty():
-		body.add_child(UiKit.label("No scores yet. Play a run to set your first record!", 20))
-	var rank := 1
-	for e in list:
-		body.add_child(UiKit.label("%2d.  %-16s  %s %s" % [rank, e["name"], str(e["value"]), unit], 20))
-		rank += 1
+func _draw_board(rows: Array, online: bool) -> void:
+	UiKit.clear(_board_body)
+	var info: Array = Records.BOARDS[_board_id]
+	var unit: String = info[2]
+	var title := UiKit.label(String(info[0]), 30, Color(1.0, 0.93, 0.75))
+	UiKit.outlined(title, 5)
+	_board_body.add_child(title)
+	if rows.is_empty():
+		_board_body.add_child(UiKit.label("No records yet. Play a run and be the first on the board!", 20))
+		return
+	var me := Records.player_name()
+	var medals := [Color(1.0, 0.82, 0.25), Color(0.82, 0.85, 0.9), Color(0.85, 0.55, 0.3)]
+	var podium := HBoxContainer.new()
+	podium.add_theme_constant_override("separation", 12)
+	podium.alignment = BoxContainer.ALIGNMENT_CENTER
+	_board_body.add_child(podium)
+	for i in mini(3, rows.size()):
+		var e: Dictionary = rows[i]
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(190, 120 - i * 14)
+		var c: Color = medals[i]
+		card.add_theme_stylebox_override("panel", UiKit.flat(Color(c.r * 0.35, c.g * 0.35, c.b * 0.35, 0.92), 16, c))
+		var v := VBoxContainer.new()
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		card.add_child(v)
+		v.add_child(UiKit.label("#%d" % (i + 1), 30, c, true))
+		v.add_child(UiKit.label(String(e["name"]) + ("  (you)" if String(e["name"]) == me else ""), 20, Color(1, 1, 1), true))
+		v.add_child(UiKit.label("%s %s" % [_fmt_val(e["value"]), unit], 18, Color(1.0, 0.92, 0.6), true))
+		podium.add_child(card)
+		UiKit.intro(card, 0.08 * i)
+	for i in range(3, rows.size()):
+		var e: Dictionary = rows[i]
+		var mine := String(e["name"]) == me
+		var row := PanelContainer.new()
+		row.add_theme_stylebox_override("panel", UiKit.flat(Color(0.2, 0.4, 0.25, 0.85) if mine else Color(0.1, 0.14, 0.15, 0.7), 10, Color(1, 1, 1, 0.12)))
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 14)
+		row.add_child(h)
+		var rk := UiKit.label("#%d" % (i + 1), 20, Color(0.9, 0.85, 0.6))
+		rk.custom_minimum_size = Vector2(54, 0)
+		h.add_child(rk)
+		var nm := UiKit.label(String(e["name"]), 20)
+		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h.add_child(nm)
+		h.add_child(UiKit.label("%s %s" % [_fmt_val(e["value"]), unit], 20, Color(1.0, 0.92, 0.6)))
+		_board_body.add_child(row)
+
+
+func _fmt_val(v: Variant) -> String:
+	var f := float(v)
+	return str(int(f)) if is_equal_approx(f, round(f)) else "%.1f" % f
+
+
+## Asks for the player's name the first time, then runs `then`.
+func _go(animal: String, biome: String, mode: String) -> void:
+	var start := func() -> void:
+		if mode == "survive":
+			GameState.start_game(animal, biome)
+		else:
+			GameState.start_game("ranger", biome, mode)
+	if bool(Records.rec().get("named", false)):
+		start.call()
+		return
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.75)
+	add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var center := CenterContainer.new()
+	dim.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UiKit.flat(Color(0.08, 0.14, 0.12, 0.98), 20, Color(1.0, 0.85, 0.4, 0.8)))
+	center.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 14)
+	panel.add_child(v)
+	v.add_child(UiKit.label("Welcome, Ranger!", 36, Color(1.0, 0.93, 0.75), true))
+	v.add_child(UiKit.label("Enter your name for the leaderboard", 20, Color(0.9, 0.9, 0.85), true))
+	var edit := LineEdit.new()
+	edit.placeholder_text = "Your name"
+	edit.max_length = 14
+	edit.custom_minimum_size = Vector2(380, 56)
+	edit.add_theme_font_size_override("font_size", 26)
+	edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(edit)
+	var confirm := func() -> void:
+		var t := edit.text.strip_edges()
+		if t == "":
+			t = "Ranger%d" % (randi() % 9000 + 1000)
+		Records.set_name_value(t)
+		Records.rec()["named"] = true
+		SaveManager.save_game()
+		dim.queue_free()
+		start.call()
+	edit.text_submitted.connect(func(_t: String) -> void: confirm.call())
+	var ok := UiKit.button("START", confirm, Vector2(380, 64))
+	UiKit.accent_button(ok)
+	v.add_child(ok)
+	edit.grab_focus.call_deferred()
 
 
 # ------------------------------------------------------------------ choices

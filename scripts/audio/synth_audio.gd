@@ -86,6 +86,24 @@ static func make(sound: String) -> AudioStreamWAV:
 			return _click()
 		"bird":
 			return _bird()
+		"chirp_a":
+			return _chirp_a()
+		"chirp_b":
+			return _chirp_b()
+		"cuckoo":
+			return _cuckoo()
+		"owl":
+			return _owl()
+		"cricket":
+			return _cricket()
+		"frog":
+			return _frog()
+		"eagle":
+			return _eagle()
+		"crow":
+			return _crow()
+		"splash":
+			return _splash()
 	return null
 
 
@@ -432,6 +450,77 @@ static func _click() -> AudioStreamWAV:
 	var b := _buf(0.08, R_LOW)
 	_tone(b, R_LOW, 0.0, 0.05, 900.0, 700.0, 0.8, 0, 60.0)
 	return _wav(b, R_LOW, false)
+
+
+## Fast trill, like a sparrow or bulbul.
+static func _chirp_a() -> AudioStreamWAV:
+	var b := _buf(0.7, R_HI)
+	var f0 := randf_range(3200.0, 4200.0)
+	for k in 7:
+		_tone(b, R_HI, k * 0.065, 0.05, f0 + k * 90.0, f0 * 1.2 + k * 60.0, 0.6, 0, 18.0)
+	return _wav(b, R_HI, false)
+
+
+## Two clear whistled notes, like a shama or oriole.
+static func _chirp_b() -> AudioStreamWAV:
+	var b := _buf(0.9, R_HI)
+	var f0 := randf_range(1900.0, 2500.0)
+	_tone(b, R_HI, 0.0, 0.28, f0, f0 * 1.35, 0.7, 0, 3.0, 22.0, 60.0)
+	_tone(b, R_HI, 0.34, 0.4, f0 * 1.3, f0 * 0.8, 0.7, 0, 3.0, 18.0, 70.0)
+	return _wav(b, R_HI, false)
+
+
+## Hoopoe style "oop-oop-oop".
+static func _cuckoo() -> AudioStreamWAV:
+	var b := _buf(1.2, R_HI)
+	for k in 3:
+		_tone(b, R_HI, k * 0.3, 0.2, 520.0, 470.0, 0.9, 0, 5.0)
+	return _wav(_lp(b, 0.5), R_HI, false)
+
+
+static func _owl() -> AudioStreamWAV:
+	var b := _buf(1.6, R_LOW)
+	_tone(b, R_LOW, 0.0, 0.45, 420.0, 360.0, 0.8, 0, 2.5, 5.0, 8.0)
+	_tone(b, R_LOW, 0.7, 0.7, 400.0, 300.0, 0.9, 0, 1.8, 5.0, 8.0)
+	_noise_burst(b, R_LOW, 0.0, 1.4, 0.05, 2.0, 0.2)
+	return _wav(b, R_LOW, false)
+
+
+static func _cricket() -> AudioStreamWAV:
+	var b := _buf(1.6, R_HI)
+	for k in 12:
+		var t0 := k * 0.12
+		_tone(b, R_HI, t0, 0.07, 4300.0, 4400.0, 0.5, 0, 12.0)
+		_tone(b, R_HI, t0 + 0.035, 0.05, 4500.0, 4500.0, 0.3, 0, 14.0)
+	return _wav(b, R_HI, false)
+
+
+static func _frog() -> AudioStreamWAV:
+	var b := _buf(1.0, R_LOW)
+	for k in 3:
+		_tone(b, R_LOW, k * 0.28, 0.18, 190.0, 150.0, 0.8, 1, 5.0, 38.0, 25.0)
+	return _wav(_lp(b, 0.35), R_LOW, false)
+
+
+static func _eagle() -> AudioStreamWAV:
+	var b := _buf(1.5, R_HI)
+	_tone(b, R_HI, 0.0, 1.0, 2900.0, 1700.0, 0.7, 0, 1.6, 26.0, 120.0)
+	_tone(b, R_HI, 0.0, 1.0, 5800.0, 3400.0, 0.15, 0, 2.5, 26.0, 200.0)
+	return _wav(b, R_HI, false)
+
+
+static func _crow() -> AudioStreamWAV:
+	var b := _buf(1.0, R_HI)
+	for k in 2:
+		_tone(b, R_HI, k * 0.33, 0.25, 480.0, 360.0, 0.9, 1, 4.0, 55.0, 40.0)
+	return _wav(_lp(b, 0.4), R_HI, false)
+
+
+static func _splash() -> AudioStreamWAV:
+	var b := _buf(0.6, R_HI)
+	_noise_burst(b, R_HI, 0.0, 0.5, 0.8, 7.0, 0.5)
+	_noise_burst(b, R_HI, 0.08, 0.3, 0.5, 10.0, 0.25)
+	return _wav(b, R_HI, false)
 
 
 static func _bird() -> AudioStreamWAV:

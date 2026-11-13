@@ -50,6 +50,41 @@ func _ready() -> void:
 	add_child(rope)
 
 
+var _progress := 0.0
+var _sign: Label3D
+const RESCUE_TIME := 1.4
+const RESCUE_RANGE := 3.2
+
+
+## Rescue is automatic: stand next to the trapped animal for a moment.
+func _process(delta: float) -> void:
+	if _sign == null:
+		_sign = Label3D.new()
+		_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_sign.no_depth_test = true
+		_sign.fixed_size = true
+		_sign.pixel_size = 0.0007
+		_sign.font_size = 40
+		_sign.outline_size = 12
+		_sign.position = Vector3(0, 2.4, 0)
+		add_child(_sign)
+	var pl := GameState.player as Node3D
+	if pl == null or not is_instance_valid(pl):
+		return
+	var d := Vector2(pl.global_position.x - global_position.x, pl.global_position.z - global_position.z).length()
+	if d < RESCUE_RANGE:
+		_progress += delta
+		_sign.text = "Rescuing... %d%%" % int(clampf(_progress / RESCUE_TIME, 0.0, 1.0) * 100.0)
+		_sign.modulate = Color(1.0, 0.9, 0.4)
+		if _progress >= RESCUE_TIME:
+			set_process(false)
+			interact(pl as PlayerAnimal)
+	else:
+		_progress = maxf(0.0, _progress - delta * 2.0)
+		_sign.text = "HELP!  %d m" % int(d) if d < 40.0 else ""
+		_sign.modulate = Color(1.0, 0.5, 0.4)
+
+
 func interact(_player: PlayerAnimal) -> void:
 	if species == "indus_dolphin":
 		_release_dolphin()

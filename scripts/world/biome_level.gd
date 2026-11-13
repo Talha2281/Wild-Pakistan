@@ -42,6 +42,7 @@ func _ready() -> void:
 	_spawn_orbs(44)
 	_spawn_wildlife()
 	_spawn_dolphins()
+	add_child(NatureAmbience.new())
 	_spawn_shikari()
 
 	env = EnvironmentController.new()

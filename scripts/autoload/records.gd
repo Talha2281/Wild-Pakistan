@@ -159,6 +159,12 @@ func local_board(board: String) -> Array:
 ## Called at the end of a run.
 func finish_run(mode: String, score: int) -> void:
 	bump("runs")
+	var hist: Array = SaveManager.data.get("history", [])
+	hist.push_front({"mode": mode, "biome": GameState.biome_id, "animal": GameState.animal_id, "score": score,
+		"t": int(Time.get_unix_time_from_system())})
+	while hist.size() > 15:
+		hist.pop_back()
+	SaveManager.data["history"] = hist
 	if mode == "survive":
 		submit("survival", score)
 	else:
