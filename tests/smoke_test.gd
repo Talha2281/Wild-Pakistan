@@ -23,6 +23,7 @@ func _run() -> void:
 	_gs = GameState
 	_check_sounds()
 	_check_models()
+	await _check_menu()
 	for biome in Biomes.ORDER:
 		for animal in Animals.ORDER:
 			if (Animals.DB[animal]["habitats"] as Array).has(biome):
@@ -31,6 +32,18 @@ func _run() -> void:
 		await _test_level(biome, "ranger", "safari")
 	print("SMOKE TEST FINISHED  failures=%d" % failures)
 	get_tree().quit(1 if failures > 0 else 0)
+
+
+func _check_menu() -> void:
+	var menu: Node = (load("res://scenes/main_menu.tscn") as PackedScene).instantiate()
+	get_tree().root.add_child(menu)
+	await get_tree().process_frame
+	for fn in ["_show_modes", "_show_about", "_show_profile", "_show_boards", "_show_journal", "_show_settings", "_show_select", "_show_main"]:
+		menu.call(fn)
+		await get_tree().process_frame
+	menu.queue_free()
+	await get_tree().process_frame
+	print("menu screens ok")
 
 
 func _fail(msg: String) -> void:

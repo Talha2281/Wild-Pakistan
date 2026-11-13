@@ -575,7 +575,7 @@ func _show_profile() -> void:
 		col.add_child(UiKit.label("No runs yet.", 18, Color(0.7, 0.7, 0.7)))
 	for h in hist:
 		var when := Time.get_datetime_dict_from_unix_time(int(h.get("t", 0)))
-		var an := Animals.get_cfg(String(h.get("animal", "chinkara")))["name"]
+		var an: String = Animals.get_cfg(String(h.get("animal", "chinkara")))["name"]
 		var bn := String(Biomes.DB[String(h.get("biome", "thar"))]["name"]) if Biomes.DB.has(String(h.get("biome", "thar"))) else ""
 		col.add_child(UiKit.label("%02d/%02d  %s  %s  %s  score %d" % [when["day"], when["month"], String(h.get("mode", "survive")).capitalize(), an, bn, int(h.get("score", 0))], 17, Color(0.85, 0.9, 0.95)))
 	col.add_child(UiKit.label("Field Guide  (%d / %d discovered)" % [Records.discovered_count(), Catalog.total_species()], 28, Color(1.0, 0.93, 0.75)))
