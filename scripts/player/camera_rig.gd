@@ -43,6 +43,14 @@ func _process(delta: float) -> void:
 	global_position = global_position.lerp(goal, clampf(follow_speed * delta, 0.0, 1.0))
 	rotation.y = yaw
 	_arm.rotation.x = pitch
+	# Cinematic feel: the view widens and trembles slightly at speed.
+	var body := target as CharacterBody3D
+	if body != null:
+		var spd := Vector2(body.velocity.x, body.velocity.z).length()
+		var k := clampf(spd / 11.0, 0.0, 1.0)
+		camera.fov = lerpf(camera.fov, 70.0 + 13.0 * k, clampf(delta * 3.0, 0.0, 1.0))
+		camera.h_offset = sin(Time.get_ticks_msec() * 0.03) * 0.025 * k
+		camera.v_offset = sin(Time.get_ticks_msec() * 0.041) * 0.02 * k
 
 
 func _unhandled_input(event: InputEvent) -> void:

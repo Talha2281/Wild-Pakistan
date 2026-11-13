@@ -7,6 +7,8 @@ extends CharacterBody3D
 
 var species_id := "chinkara"
 var skin_index := 0
+var _dust: CPUParticles3D
+var _was_air := false
 var cfg: Dictionary = {}
 var diet := "herbivore"
 var is_predator := false
@@ -70,6 +72,32 @@ func _ready() -> void:
 	else:
 		_visual = AnimalModel.build(species_id, Animals.skin_color(species_id, skin_index))
 	add_child(_visual)
+
+	_dust = CPUParticles3D.new()
+	_dust.amount = 18
+	_dust.lifetime = 0.9
+	_dust.emitting = false
+	_dust.local_coords = false
+	_dust.direction = Vector3(0, 1, 0)
+	_dust.spread = 40.0
+	_dust.initial_velocity_min = 0.4
+	_dust.initial_velocity_max = 1.2
+	_dust.gravity = Vector3(0, -0.4, 0)
+	_dust.scale_amount_min = 0.5
+	_dust.scale_amount_max = 1.1
+	var dm := SphereMesh.new()
+	dm.radius = 0.16
+	dm.height = 0.3
+	dm.radial_segments = 6
+	dm.rings = 3
+	var dmat := StandardMaterial3D.new()
+	dmat.albedo_color = Color(0.75, 0.68, 0.55, 0.45)
+	dmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dm.material = dmat
+	_dust.mesh = dm
+	_dust.position.y = 0.1
+	add_child(_dust)
 
 	stats = SurvivalStats.new()
 	stats.name = "SurvivalStats"
@@ -161,7 +189,13 @@ func _physics_process(delta: float) -> void:
 	_update_footsteps(moving, want_sprint or burst, delta)
 	_update_tracks(moving, delta)
 	_update_interaction(delta)
-	PlaceholderModel.animate(_visual, flat_speed / float(cfg["run"]), delta)
+	PlaceholderModel.animate(_visual, flat_speed / float(cfg["run"]), delta, not is_on_floor())
+	if _dust != null:
+		_dust.emitting = is_on_floor() and flat_speed > float(cfg["run"]) * 0.55
+	if is_on_floor() and _was_air:
+		_visual.scale.y = 0.82          # landing squash, eased back below
+		AudioManager.play_3d("step_grass", global_position, -2.0)
+	_was_air = not is_on_floor()
 	AnimalModel.pose_head(_visual, 1.0 if _look_down_time > 0.0 else (0.3 if stalking else 0.0), delta)
 	_visual.scale.y = lerpf(_visual.scale.y, 0.78 if stalking else 1.0, clampf(delta * 8.0, 0.0, 1.0))
 

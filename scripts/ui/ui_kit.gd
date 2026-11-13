@@ -86,7 +86,7 @@ static func label(text: String, size := 22, color := Color(0.96, 0.95, 0.9), cen
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if text.length() > 44 else TextServer.AUTOWRAP_OFF
 	if center:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l

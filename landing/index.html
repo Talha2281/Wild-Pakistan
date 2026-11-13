@@ -61,8 +61,10 @@
   .card p { font-size:.98rem; color:#e3d6bd; }
   .ic { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-weight:800; font-family:Fraunces,serif; font-size:1.3rem; color:#10201c;
         background:linear-gradient(135deg,#ffd58a,#f08a24); }
-  .mode { position:relative; overflow:hidden; min-height:300px; display:flex; flex-direction:column; }
+  .mode { position:relative; overflow:hidden; min-height:300px; display:flex !important; flex-direction:column; }
   .mode .pill { align-self:flex-start; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; padding:5px 12px; border-radius:999px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.25); }
+  a.card { color:inherit; text-decoration:none; display:block; cursor:pointer; }
+  .mode .go { margin-top:auto; padding-top:16px; font-weight:800; color:#ffd58a; font-size:1.05rem; }
   .mode ul { margin:14px 0 0 18px; color:#e3d6bd; font-size:.95rem; line-height:1.6; }
   .m1 { background:linear-gradient(160deg,#25452e,#142a20); } .m2 { background:linear-gradient(160deg,#5a4318,#2a2010); } .m3 { background:linear-gradient(160deg,#1c4660,#10222f); }
   .species { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; margin-top:30px; }
@@ -161,12 +163,12 @@
     <div class="eyebrow reveal">Game modes</div>
     <h2 class="reveal">Choose how you play</h2>
     <div class="grid g3">
-      <div class="card mode m1 reveal"><span class="pill">Survival</span><h3>Wild Life</h3><p>Become a chinkara, markhor, snow leopard or brown bear. Eat, drink, hide, fight back and survive day after day.</p>
-        <ul><li>4 playable animals, each with an ability</li><li>Missions unlock animals and habitats</li><li>Score, combos and daily survival</li></ul></div>
-      <div class="card mode m2 reveal"><span class="pill">Conservation</span><h3>Ranger Patrol</h3><p>Protect the wild. Dart poachers, arrest them, free trapped animals, remove snares and collect evidence.</p>
-        <ul><li>Lose too many animals and the patrol fails</li><li>Earn XP, ranks and coin rewards</li><li>Learn a real conservation lesson each run</li></ul></div>
-      <div class="card mode m3 reveal"><span class="pill">Relaxed</span><h3>Photo Safari</h3><p>A peaceful walk with no poachers. Find rare wildlife, frame the shot and fill your field guide.</p>
-        <ul><li>Star ratings for framing, distance and rarity</li><li>Dolphins, bears, leopards to discover</li><li>Competes on the photo leaderboard</li></ul></div>
+      <a class="card mode m1 reveal" href="game/?mode=survive"><span class="pill">Survival</span><h3>Wild Life</h3><p>Become a chinkara, markhor, snow leopard or brown bear. Eat, drink, hide, fight back and survive day after day.</p>
+        <ul><li>4 playable animals, each with an ability</li><li>Missions unlock animals and habitats</li><li>Score, combos and daily survival</li></ul><span class="go">Play Wild Life &rarr;</span></a>
+      <a class="card mode m2 reveal" href="game/?mode=ranger"><span class="pill">Conservation</span><h3>Ranger Patrol</h3><p>Protect the wild. Dart poachers, arrest them, free trapped animals, remove snares and collect evidence.</p>
+        <ul><li>Lose too many animals and the patrol fails</li><li>Earn XP, ranks and coin rewards</li><li>Learn a real conservation lesson each run</li></ul><span class="go">Play Ranger Patrol &rarr;</span></a>
+      <a class="card mode m3 reveal" href="game/?mode=safari"><span class="pill">Relaxed</span><h3>Photo Safari</h3><p>A peaceful walk with no poachers. Find rare wildlife, frame the shot and fill your field guide.</p>
+        <ul><li>Star ratings for framing, distance and rarity</li><li>Dolphins, bears, leopards to discover</li><li>Competes on the photo leaderboard</li></ul><span class="go">Play Photo Safari &rarr;</span></a>
     </div>
   </section>
 

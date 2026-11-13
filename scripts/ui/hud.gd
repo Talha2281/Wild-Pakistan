@@ -61,6 +61,7 @@ func _ready() -> void:
 	_build_top_right()
 	_build_score()
 	_build_ranger_info()
+	_root.add_child(GuideHint.new())
 	_build_messages()
 	_build_touch_controls()
 	_build_pause_menu()

@@ -31,6 +31,7 @@ func _ready() -> void:
 	AudioManager.set_environment(0.15, 0.0, 0.0)
 	AudioManager.play_music("music_menu", -9.0)
 	_show_main()
+	_auto_start_from_url.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -127,8 +128,9 @@ func _show_main() -> void:
 	box.add_child(row)
 	var row2 := HBoxContainer.new()
 	row2.add_theme_constant_override("separation", 10)
-	row2.add_child(UiKit.button("Journal", _show_journal, Vector2(184, 50)))
-	row2.add_child(UiKit.button("Settings", _show_settings, Vector2(184, 50)))
+	row2.add_child(UiKit.button("Journal", _show_journal, Vector2(120, 50)))
+	row2.add_child(UiKit.button("Settings", _show_settings, Vector2(120, 50)))
+	row2.add_child(UiKit.button("About", _show_about, Vector2(120, 50)))
 	box.add_child(row2)
 	if not OS.has_feature("mobile") and not OS.has_feature("web"):
 		box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit(), Vector2(380, 50)))
@@ -331,35 +333,14 @@ func _biome_row() -> Control:
 
 
 func _show_journal() -> void:
-	UiKit.clear(_content)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	_content.add_child(root)
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 40.0
-	root.offset_right = -40.0
-	root.offset_top = 16.0
-	root.offset_bottom = -16.0
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 16)
-	top.add_child(UiKit.button("< Back", _show_main, Vector2(140, 52)))
-	top.add_child(UiKit.label("Journal", 34))
-	root.add_child(top)
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(col)
+	var root := _screen("Journal", _show_main)
+	var col := _scroll_box(root)
 
 	var stats: Dictionary = SaveManager.data["stats"]
 	col.add_child(UiKit.label("Missions completed: %d / %d    Best run: %d days    Total days: %d    Hunts: %d    Rescues: %d    Deaths: %d" % [
 		SaveManager.completed_count(), MissionManager.MISSIONS.size(), int(stats.get("best_days", 0)),
 		int(stats.get("total_days", 0)), int(stats.get("kills", 0)), int(stats.get("rescues", 0)), int(stats.get("deaths", 0))], 20, Color(1.0, 0.88, 0.4)))
-	col.add_child(UiKit.label("Complete missions to unlock animals: Markhor (3), Snow Leopard (8), Himalayan Brown Bear (12) and habitats: Indus River (2), Ziarat (3), Deosai (5), Northern Mountains (7).", 18))
+	col.add_child(UiKit.label("All animals and habitats are open. Missions give coins and skins, and complete the journal.", 18))
 
 	for biome in ["thar", "indus", "ziarat", "deosai", "northern", "any"]:
 		var heading := "Anywhere" if biome == "any" else String(Biomes.DB[biome]["name"])
@@ -382,25 +363,53 @@ func _show_journal() -> void:
 
 
 func _show_settings() -> void:
-	UiKit.clear(_content)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 14)
-	_content.add_child(root)
-	root.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	root.offset_left = -430.0
-	root.offset_right = 430.0
-	root.offset_top = -250.0
-	root.offset_bottom = 250.0
-	root.add_child(UiKit.label("Settings", 38, Color(1, 1, 1), true))
+	var root := _screen("Settings", _show_main)
+	var col := _scroll_box(root)
 	var panel := SettingsPanel.new()
 	panel.allow_reset = true
-	root.add_child(UiKit.panel(panel))
-	var back := UiKit.button("< Back", _show_main, Vector2(200, 56))
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	root.add_child(back)
+	col.add_child(UiKit.panel(panel))
 
 
 # ------------------------------------------------------------ modes & records
+
+func _show_about() -> void:
+	var root := _screen("About Wild Pakistan", _show_main)
+	var col := _scroll_box(root)
+	var tex := load("res://assets/branding/logo.png") as Texture2D
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.custom_minimum_size = Vector2(160, 160)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		col.add_child(tr)
+	var paras := [
+		"Wild Pakistan - The Last Wilderness is a free 3D wildlife game set in five real Pakistani habitats: the Thar Desert, Indus River Plains, Ziarat Juniper Forest, Deosai Plains and the Northern Mountains.",
+		"Wild Life: live as a chinkara, markhor, snow leopard or brown bear. Eat, drink, hide, fight back and survive heat, cold, hunger and poachers.",
+		"Ranger Patrol: protect the wild. Dart and arrest poachers, free trapped animals, remove snares and rescue a stranded Indus dolphin.",
+		"Photo Safari: a peaceful walk to photograph rare wildlife and fill your field guide.",
+		"Many of these species are really endangered. Fewer than about 400 snow leopards live in Pakistan and only about 2,000 Indus river dolphins remain. Never buy wildlife products, and report wildlife crime to your provincial wildlife department.",
+		"Controls: WASD move, Shift run, Space jump, F attack or dart, E interact, Q ability, C photo. On phones use the on-screen joystick and buttons. Follow the arrow at the top of the screen to find food, water and rescues.",
+	]
+	for p in paras:
+		var l := UiKit.label(p, 19)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(700, 0)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_child(l)
+
+
+## On the web, the landing page opens the game with ?mode=survive|ranger|safari.
+func _auto_start_from_url() -> void:
+	if not OS.has_feature("web"):
+		return
+	var m = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('mode') || ''")
+	var mode := String(m) if m != null else ""
+	if mode == "survive":
+		GameState.start_game(_sel_animal, _sel_biome)
+	elif mode == "ranger" or mode == "safari":
+		GameState.start_game("ranger", String(SaveManager.data.get("last_biome", "thar")), mode)
+
 
 func _play_last() -> void:
 	var last := String(SaveManager.data.get("last_mode", "survive"))
@@ -425,10 +434,40 @@ func _screen(title: String, back: Callable) -> VBoxContainer:
 	top.add_theme_constant_override("separation", 16)
 	top.add_child(UiKit.button("< Back", back, Vector2(140, 52)))
 	var l := UiKit.label(title, 36, Color(1.0, 0.93, 0.75))
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	UiKit.outlined(l, 6)
 	top.add_child(l)
+	top.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	root.add_child(top)
 	return root
+
+
+## Scrollable column that fills the rest of the screen. Mouse wheel, drag on the
+## scrollbar and the big UP / DOWN buttons all scroll it (works on touch too).
+func _scroll_box(root: VBoxContainer) -> VBoxContainer:
+	var wrap := HBoxContainer.new()
+	wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	wrap.add_theme_constant_override("separation", 8)
+	root.add_child(wrap)
+	var sc := ScrollContainer.new()
+	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.scroll_deadzone = 12
+	wrap.add_child(sc)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(col)
+	var bar := sc.get_v_scroll_bar()
+	bar.custom_minimum_size.x = 18.0
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 10)
+	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	side.add_child(UiKit.button("UP", func() -> void: sc.scroll_vertical = maxi(0, sc.scroll_vertical - 260), Vector2(84, 70)))
+	side.add_child(UiKit.button("DOWN", func() -> void: sc.scroll_vertical += 260, Vector2(84, 70)))
+	wrap.add_child(side)
+	return col
 
 
 func _mode_card(title: String, blurb: String, color: Color, callback: Callable) -> Control:
@@ -455,11 +494,13 @@ func _mode_card(title: String, blurb: String, color: Color, callback: Callable) 
 
 func _show_modes() -> void:
 	var root := _screen("Choose how to play", _show_main)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 22)
-	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(row)
+	var box := _scroll_box(root)
+	var row := HFlowContainer.new()
+	row.alignment = FlowContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("h_separation", 22)
+	row.add_theme_constant_override("v_separation", 22)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(row)
 	row.add_child(_mode_card("Wild Life", "Live as a wild animal. Eat, drink, hide, fight back and survive the seasons while poachers hunt.", Color(0.16, 0.3, 0.2, 0.92), _show_select))
 	row.add_child(_mode_card("Ranger Patrol", "Become a wildlife ranger. Dart and arrest poachers, free trapped animals, remove snares. Lose too many animals and the patrol fails.", Color(0.28, 0.22, 0.1, 0.92), func() -> void: _show_ranger_select("ranger")))
 	row.add_child(_mode_card("Photo Safari", "A peaceful ranger walk. Photograph rare wildlife, fill your field guide and earn photo ratings.", Color(0.12, 0.24, 0.34, 0.92), func() -> void: _show_ranger_select("safari")))
@@ -473,14 +514,7 @@ func _show_ranger_select(mode: String) -> void:
 	var root := _screen("Ranger Patrol" if mode == "ranger" else "Photo Safari", _show_modes)
 	root.add_child(UiKit.label("Rank: %s    XP: %d    Species discovered: %d / %d" % [Records.rank_name(), Records.xp(), Records.discovered_count(), Catalog.total_species()], 22, Color(1.0, 0.88, 0.4)))
 	root.add_child(UiKit.label("Pick a habitat to patrol. Controls: DART (F) sedates a poacher, ACT (E) arrests him, PHOTO (C) takes a picture.", 18))
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(col)
+	var col := _scroll_box(root)
 	for biome in Biomes.ORDER:
 		var cfg: Dictionary = Biomes.DB[biome]
 		var locked := not SaveManager.biome_unlocked(biome)
@@ -498,14 +532,7 @@ func _show_ranger_select(mode: String) -> void:
 
 func _show_profile() -> void:
 	var root := _screen("My Profile", _show_main)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(col)
+	var col := _scroll_box(root)
 
 	var name_row := HBoxContainer.new()
 	name_row.add_theme_constant_override("separation", 10)
@@ -566,14 +593,7 @@ func _show_boards() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 6)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(body)
-	root.add_child(scroll)
+	var body := _scroll_box(root)
 	for id in Records.BOARDS:
 		var board_id: String = id
 		var title := String(Records.BOARDS[board_id][0])

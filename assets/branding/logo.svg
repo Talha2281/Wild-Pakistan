@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b3a4b"/><stop offset=".6" stop-color="#e9944a"/><stop offset="1" stop-color="#f6c27a"/></linearGradient>
+<clipPath id="c"><circle cx="256" cy="256" r="236"/></clipPath>
+</defs>
+<circle cx="256" cy="256" r="244" fill="#f0a24a"/>
+<g clip-path="url(#c)">
+<rect width="512" height="512" fill="url(#sky)"/>
+<circle cx="256" cy="268" r="74" fill="#fff1c9" opacity=".95"/>
+<path d="M0 330 L110 210 L190 290 L270 170 L370 300 L440 230 L512 320 V512 H0Z" fill="#2a4a46"/>
+<path d="M0 380 L90 300 L170 370 L260 280 L350 380 L430 320 L512 390 V512 H0Z" fill="#183530"/>
+<path d="M0 430 Q128 400 256 430 T512 420 V512 H0Z" fill="#0f2420"/>
+<path d="M205 330 q10 -40 40 -46 q18 -30 30 -8 q10 -6 14 8 q-8 4 -6 14 q18 6 20 34 l-8 0 l-4 -22 l-14 6 l-4 22 l-8 0 l2 -22 l-30 2 l-4 20 l-8 0 l2 -20 q-14 4 -12 -4z" fill="#f4e4c0" opacity=".95"/>
+</g>
+<circle cx="256" cy="256" r="236" fill="none" stroke="#fff1c9" stroke-width="6"/>
+</svg>
