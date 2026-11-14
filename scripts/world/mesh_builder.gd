@@ -175,13 +175,64 @@ static func tube(st: SurfaceTool, a: Vector3, b: Vector3, ra: float, rb: float, 
 
 
 ## A smooth bent limb/horn/tail through a list of points; radius tapers r0 -> r1.
+## One swept tube with shared rings (parallel-transport frames) so joints never fold.
 static func curve_tube(st: SurfaceTool, pts: Array, r0: float, r1: float, color: Color, color_end := Color(0, 0, 0, 0), sides := 6) -> void:
+	if pts.size() < 2:
+		return
+	var ce := color_end if color_end.a > 0.0 else color
+	# Catmull-Rom subdivision for a smooth centreline
+	var path: Array = []
 	var n := pts.size() - 1
+	var sub := 4
 	for i in range(n):
-		var k0 := float(i) / n
-		var k1 := float(i + 1) / n
-		var ce := color_end if color_end.a > 0.0 else color
-		tube(st, pts[i], pts[i + 1], lerpf(r0, r1, k0), lerpf(r0, r1, k1), color.lerp(ce, k0), color.lerp(ce, k1), sides, i == n - 1)
+		var p0: Vector3 = pts[maxi(i - 1, 0)]
+		var p1: Vector3 = pts[i]
+		var p2: Vector3 = pts[i + 1]
+		var p3: Vector3 = pts[mini(i + 2, n)]
+		for k in range(sub):
+			var t := float(k) / sub
+			path.append(0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t * t * t))
+	path.append(pts[n])
+	var m := path.size()
+	var rings: Array = []
+	var prev_n := Vector3.ZERO
+	for i in range(m):
+		var tan_v: Vector3 = (path[mini(i + 1, m - 1)] - path[maxi(i - 1, 0)])
+		if tan_v.length() < 0.00001:
+			tan_v = Vector3.DOWN
+		tan_v = tan_v.normalized()
+		var nv: Vector3
+		if i == 0:
+			var ref := Vector3.RIGHT if absf(tan_v.dot(Vector3.RIGHT)) < 0.9 else Vector3.FORWARD
+			nv = tan_v.cross(ref).normalized()
+		else:
+			nv = (prev_n - tan_v * prev_n.dot(tan_v)).normalized()
+		prev_n = nv
+		var bv := tan_v.cross(nv).normalized()
+		var f := float(i) / (m - 1)
+		var r := lerpf(r0, r1, f)
+		var col := color.lerp(ce, f)
+		var ring_p: Array = []
+		var ring_n: Array = []
+		for j in range(sides):
+			var a := TAU * float(j) / sides
+			var d := nv * cos(a) + bv * sin(a)
+			ring_p.append(path[i] + d * r)
+			ring_n.append(d)
+		rings.append({"p": ring_p, "n": ring_n, "c": col, "t": tan_v, "o": path[i]})
+	for i in range(m - 1):
+		var A: Dictionary = rings[i]
+		var B: Dictionary = rings[i + 1]
+		for j in range(sides):
+			var j2 := (j + 1) % sides
+			_tri(st, A["p"][j], A["p"][j2], B["p"][j], A["n"][j], A["n"][j2], B["n"][j], A["c"], A["c"], B["c"])
+			_tri(st, A["p"][j2], B["p"][j2], B["p"][j], A["n"][j2], B["n"][j2], B["n"][j], A["c"], B["c"], B["c"])
+	# rounded end cap
+	var L: Dictionary = rings[m - 1]
+	var tip: Vector3 = L["o"] + (L["t"] as Vector3) * r1 * 0.8
+	for j in range(sides):
+		var j2 := (j + 1) % sides
+		_tri(st, L["p"][j], L["p"][j2], tip, L["n"][j], L["n"][j2], L["t"], L["c"], L["c"], L["c"])
 
 
 ## A thin tapered strand of fur. dir is the direction it grows (length = len).

@@ -30,16 +30,34 @@ func _exit_tree() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# Touch and mouse both work. Browsers/laptops send a real mouse event AND an emulated
+	# touch for one click, so the first press wins and the duplicate is ignored.
+	var pos := Vector2.ZERO
+	var pressed := false
+	var idx := -2
+	var is_btn := false
 	if event is InputEventScreenTouch:
-		if event.pressed and _touch == -1 and _hit(event.position):
-			_touch = event.index
+		is_btn = true
+		pos = event.position
+		pressed = event.pressed
+		idx = event.index
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		is_btn = true
+		pos = event.position
+		pressed = event.pressed
+	elif event is InputEventScreenDrag and event.index == _touch:
+		get_viewport().set_input_as_handled()
+		return
+	if not is_btn:
+		return
+	if pressed:
+		if _touch == -1 and _hit(pos):
+			_touch = idx
 			_set_down(true)
 			get_viewport().set_input_as_handled()
-		elif not event.pressed and event.index == _touch:
-			_touch = -1
-			_release()
-			get_viewport().set_input_as_handled()
-	elif event is InputEventScreenDrag and event.index == _touch:
+	elif _touch != -1:
+		_touch = -1
+		_release()
 		get_viewport().set_input_as_handled()
 
 

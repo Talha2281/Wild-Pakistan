@@ -82,9 +82,10 @@ const SPECS := {
 	},
 	"snow_leopard": {
 		"paws": true,
-		"color": Color(0.78, 0.78, 0.76), "len": 1.55, "h": 0.7, "w": 0.26, "bl": 0.66, "bh": 0.4,
-		"leg": 0.42, "ears": "round", "tail": "long_thick", "spots": Color(0.17, 0.17, 0.2),
-		"spot_n": 12, "neck": 0.7, "head": 1.0, "snout": 0.5, "thick": 1.3, "belly_light": 0.3,
+		"color": Color(0.62, 0.6, 0.55), "len": 1.55, "h": 0.7, "w": 0.28, "bl": 0.66, "bh": 0.42,
+		"leg": 0.38, "ears": "round", "tail": "long_thick", "spots": Color(0.13, 0.12, 0.13),
+		"spot_n": 18, "neck": 0.7, "head": 1.05, "snout": 0.4, "thick": 1.5, "belly_light": 0.3,
+		"tail_tip": Color(0.2, 0.18, 0.17),
 	},
 	"wild_boar": {
 		"paws": true,
