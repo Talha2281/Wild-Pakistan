@@ -295,8 +295,8 @@ func _build_goal() -> void:
 	_goal_label.anchor_right = 1.0
 	_goal_label.offset_left = 300.0
 	_goal_label.offset_right = -340.0
-	_goal_label.offset_top = 116.0
-	_goal_label.offset_bottom = 144.0
+	_goal_label.offset_top = 120.0
+	_goal_label.offset_bottom = 148.0
 	_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_goal_label)
 	_refresh_goal()
@@ -342,14 +342,14 @@ func _build_intro() -> void:
 	panel_box.add_child(h)
 	box.add_child(panel_box)
 	_intro.position.y = -60.0
-	_guide.visible = false
+	_guide.modulate.a = 0.0
 	_intro.modulate.a = 0.0
 	var tw := create_tween()
 	tw.tween_property(_intro, "modulate:a", 1.0, 0.5)
 	tw.tween_interval(6.0)
 	tw.tween_property(_intro, "modulate:a", 0.0, 1.0)
 	tw.tween_callback(func() -> void:
-		_guide.visible = true
+		create_tween().tween_property(_guide, "modulate:a", 1.0, 0.5)
 		_intro.queue_free())
 
 
@@ -372,8 +372,8 @@ func _build_messages() -> void:
 	_toast_label.anchor_right = 1.0
 	_toast_label.offset_left = 120.0
 	_toast_label.offset_right = -120.0
-	_toast_label.offset_top = 90.0
-	_toast_label.offset_bottom = 150.0
+	_toast_label.offset_top = 84.0
+	_toast_label.offset_bottom = 114.0
 	_toast_label.modulate.a = 0.0
 	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_toast_label)
