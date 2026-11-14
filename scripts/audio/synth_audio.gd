@@ -102,6 +102,20 @@ static func make(sound: String) -> AudioStreamWAV:
 			return _eagle()
 		"crow":
 			return _crow()
+		"ram_bleat":
+			return _ram_bleat()
+		"boar_grunt":
+			return _growl(130.0, 0.45, 14.0)
+		"hyena_laugh":
+			return _hyena()
+		"hiss":
+			return _hiss()
+		"hare_squeal":
+			return _squeak(1900.0, 900.0, 0.35)
+		"deer_cry":
+			return _squeak(950.0, 520.0, 0.55)
+		"dolphin":
+			return _dolphin()
 		"splash":
 			return _splash()
 	return null
@@ -424,6 +438,34 @@ static func _bleat() -> AudioStreamWAV:
 	var b := _buf(0.8, R_HI)
 	_tone(b, R_HI, 0.0, 0.7, 360.0, 330.0, 0.8, 1, 1.5, 30.0, 45.0)
 	return _wav(_lp(b, 0.3), R_HI, false)
+
+
+static func _ram_bleat() -> AudioStreamWAV:
+	var b := _buf(0.9, R_HI)
+	_tone(b, R_HI, 0.0, 0.8, 250.0, 215.0, 0.8, 1, 1.2, 28.0, 40.0)
+	_noise_burst(b, R_HI, 0.0, 0.8, 0.12, 2.0, 0.3)
+	return _wav(_lp(b, 0.3), R_HI, false)
+
+
+static func _hyena() -> AudioStreamWAV:
+	var b := _buf(1.1, R_HI)
+	for i in 7:
+		_tone(b, R_HI, float(i) * 0.13, 0.11, 520.0 + float(i) * 25.0, 400.0, 0.8, 2, 6.0)
+	return _wav(_lp(b, 0.5), R_HI, false)
+
+
+static func _hiss() -> AudioStreamWAV:
+	var b := _buf(0.8, R_LOW)
+	_noise_burst(b, R_LOW, 0.0, 0.7, 0.9, 2.5, 0.75)
+	return _wav(b, R_LOW, false)
+
+
+static func _dolphin() -> AudioStreamWAV:
+	var b := _buf(0.9, R_HI)
+	_tone(b, R_HI, 0.0, 0.45, 2300.0, 5200.0, 0.7, 0, 1.5, 6.0, 120.0)
+	for i in 6:
+		_tone(b, R_HI, 0.5 + float(i) * 0.06, 0.03, 4200.0, 3000.0, 0.6, 2, 30.0)
+	return _wav(b, R_HI, false)
 
 
 static func _squeak(f0: float, f1: float, dur: float) -> AudioStreamWAV:

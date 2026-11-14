@@ -119,28 +119,37 @@ func _make_overlay(color: Color) -> ColorRect:
 
 
 func _build_stats() -> void:
+	var card := PanelContainer.new()
+	card.position = Vector2(12, 10)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var gs := UiKit.glass(18)
+	gs.content_margin_left = 12.0
+	gs.content_margin_right = 12.0
+	gs.content_margin_top = 8.0
+	gs.content_margin_bottom = 8.0
+	card.add_theme_stylebox_override("panel", gs)
+	_root.add_child(card)
 	var box := VBoxContainer.new()
-	box.position = Vector2(16, 12)
-	box.add_theme_constant_override("separation", 3)
+	box.add_theme_constant_override("separation", 4)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(box)
+	card.add_child(box)
 	for key in ["health", "hunger", "thirst", "stamina", "temp"]:
 		var row := HBoxContainer.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var label := UiKit.label(BAR_NAMES[key], 16)
 		label.custom_minimum_size = Vector2(64, 0)
 		var bar := ProgressBar.new()
-		bar.custom_minimum_size = Vector2(190, 16)
+		bar.custom_minimum_size = Vector2(180, 14)
 		bar.show_percentage = false
 		bar.max_value = 100.0
 		bar.value = 100.0 if key != "temp" else 50.0
 		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var fill := StyleBoxFlat.new()
 		fill.bg_color = BAR_COLORS[key]
-		fill.set_corner_radius_all(4)
+		fill.set_corner_radius_all(7)
 		var back := StyleBoxFlat.new()
 		back.bg_color = Color(0.0, 0.0, 0.0, 0.45)
-		back.set_corner_radius_all(4)
+		back.set_corner_radius_all(7)
 		bar.add_theme_stylebox_override("fill", fill)
 		bar.add_theme_stylebox_override("background", back)
 		row.add_child(label)

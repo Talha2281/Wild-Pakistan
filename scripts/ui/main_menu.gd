@@ -97,33 +97,37 @@ func _build_background() -> void:
 
 func _show_main() -> void:
 	UiKit.clear(_content)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", UiKit.glass(28))
+	_content.add_child(card)
+	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
+	card.offset_left = 50.0
+	card.offset_right = 520.0
+	card.offset_top = -320.0
+	card.offset_bottom = 320.0
+	card.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
-	_content.add_child(box)
-	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
-	box.offset_left = 80.0
-	box.offset_top = -300.0
-	box.offset_right = 620.0
-	box.offset_bottom = 300.0
+	box.add_theme_constant_override("separation", 10)
+	card.add_child(box)
 
 	var logo := load("res://assets/branding/logo.png") as Texture2D
 	if logo != null:
 		var lr := TextureRect.new()
 		lr.texture = logo
-		lr.custom_minimum_size = Vector2(150, 150)
+		lr.custom_minimum_size = Vector2(104, 104)
 		lr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		lr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		lr.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		box.add_child(lr)
-	var title := UiKit.label("WILD PAKISTAN", 64, Color(1.0, 0.93, 0.75))
+	var title := UiKit.label("WILD PAKISTAN", 52, Color(1.0, 0.93, 0.75))
 	UiKit.outlined(title, 10)
 	box.add_child(title)
-	var sub := UiKit.label("The Last Wilderness", 32, Color(0.95, 0.8, 0.5))
+	var sub := UiKit.label("The Last Wilderness", 24, Color(0.95, 0.8, 0.5))
 	UiKit.outlined(sub, 6)
 	box.add_child(sub)
 
 	var last_a: String = _sel_animal
-	var play := UiKit.button("PLAY NOW", _play_last, Vector2(380, 84))
+	var play := UiKit.button("PLAY NOW", _play_last, Vector2(380, 76))
 	UiKit.accent_button(play)
 	box.add_child(play)
 	var pick := UiKit.button("Choose game mode", _show_modes, Vector2(380, 60))
@@ -720,9 +724,6 @@ func _go(animal: String, biome: String, mode: String) -> void:
 			GameState.start_game(animal, biome)
 		else:
 			GameState.start_game("ranger", biome, mode)
-	if bool(Records.rec().get("named", false)):
-		start.call()
-		return
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.75)
 	add_child(dim)
@@ -736,10 +737,12 @@ func _go(animal: String, biome: String, mode: String) -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	panel.add_child(v)
-	v.add_child(UiKit.label("Welcome, Ranger!", 36, Color(1.0, 0.93, 0.75), true))
-	v.add_child(UiKit.label("Enter your name for the leaderboard", 20, Color(0.9, 0.9, 0.85), true))
+	v.add_child(UiKit.label("Who is playing?", 36, Color(1.0, 0.93, 0.75), true))
+	v.add_child(UiKit.label("Your name goes on the leaderboard", 20, Color(0.9, 0.9, 0.85), true))
 	var edit := LineEdit.new()
 	edit.placeholder_text = "Your name"
+	if bool(Records.rec().get("named", false)):
+		edit.text = Records.player_name()
 	edit.max_length = 14
 	edit.custom_minimum_size = Vector2(380, 56)
 	edit.add_theme_font_size_override("font_size", 26)

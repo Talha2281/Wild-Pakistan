@@ -16,12 +16,12 @@ static func make_theme() -> Theme:
 	t.set_color("font_color", "Label", Color(0.96, 0.95, 0.9))
 	t.set_color("font_color", "Button", Color(0.97, 0.96, 0.92))
 	t.set_color("font_disabled_color", "Button", Color(0.6, 0.6, 0.6))
-	t.set_stylebox("normal", "Button", flat(Color(0.16, 0.2, 0.17, 0.92), 12, Color(0.55, 0.7, 0.45, 0.8)))
-	t.set_stylebox("hover", "Button", flat(Color(0.24, 0.3, 0.24, 0.95), 12, Color(0.75, 0.9, 0.6, 1.0)))
-	t.set_stylebox("pressed", "Button", flat(Color(0.34, 0.44, 0.3, 1.0), 12, Color(0.9, 1.0, 0.75, 1.0)))
-	t.set_stylebox("disabled", "Button", flat(Color(0.12, 0.13, 0.12, 0.8), 12, Color(0.3, 0.3, 0.3, 0.6)))
+	t.set_stylebox("normal", "Button", flat(Color(0.08, 0.16, 0.13, 0.88), 16, Color(0.95, 0.8, 0.45, 0.35)))
+	t.set_stylebox("hover", "Button", flat(Color(0.14, 0.27, 0.21, 0.96), 16, Color(1.0, 0.85, 0.5, 0.95)))
+	t.set_stylebox("pressed", "Button", flat(Color(0.2, 0.36, 0.27, 1.0), 16, Color(1.0, 0.92, 0.65, 1.0)))
+	t.set_stylebox("disabled", "Button", flat(Color(0.1, 0.12, 0.11, 0.8), 16, Color(0.3, 0.3, 0.3, 0.5)))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
-	t.set_stylebox("panel", "PanelContainer", flat(Color(0.05, 0.07, 0.06, 0.72), 14, Color(0.4, 0.5, 0.35, 0.5)))
+	t.set_stylebox("panel", "PanelContainer", glass())
 	_theme = t
 	return t
 
@@ -37,6 +37,20 @@ static func flat(color: Color, radius: int, border := Color(0, 0, 0, 0)) -> Styl
 	if border.a > 0.0:
 		sb.border_color = border
 		sb.set_border_width_all(2)
+	sb.shadow_color = Color(0, 0, 0, 0.35)
+	sb.shadow_size = 8
+	sb.shadow_offset = Vector2(0, 3)
+	return sb
+
+
+## Frosted forest-green card used for menus and the HUD.
+static func glass(radius := 22) -> StyleBoxFlat:
+	var sb := flat(Color(0.04, 0.1, 0.09, 0.8), radius, Color(0.95, 0.8, 0.45, 0.28))
+	sb.content_margin_left = 22.0
+	sb.content_margin_right = 22.0
+	sb.content_margin_top = 16.0
+	sb.content_margin_bottom = 16.0
+	sb.shadow_size = 18
 	return sb
 
 
@@ -75,9 +89,15 @@ static func intro(node: Control, delay := 0.0) -> void:
 static func accent_button(b: Button) -> void:
 	b.add_theme_font_size_override("font_size", 34)
 	b.add_theme_color_override("font_color", Color(1, 1, 1))
-	b.add_theme_stylebox_override("normal", flat(Color(0.85, 0.42, 0.1, 1.0), 18, Color(1.0, 0.85, 0.4, 1.0)))
-	b.add_theme_stylebox_override("hover", flat(Color(0.97, 0.55, 0.18, 1.0), 18, Color(1.0, 0.95, 0.6, 1.0)))
-	b.add_theme_stylebox_override("pressed", flat(Color(0.7, 0.32, 0.06, 1.0), 18, Color(1.0, 0.95, 0.6, 1.0)))
+	var glow := flat(Color(0.93, 0.5, 0.12, 1.0), 26, Color(1.0, 0.88, 0.5, 1.0))
+	glow.shadow_color = Color(0.95, 0.5, 0.1, 0.55)
+	glow.shadow_size = 16
+	b.add_theme_stylebox_override("normal", glow)
+	var hov := flat(Color(1.0, 0.6, 0.2, 1.0), 26, Color(1.0, 0.95, 0.65, 1.0))
+	hov.shadow_color = Color(1.0, 0.6, 0.2, 0.7)
+	hov.shadow_size = 22
+	b.add_theme_stylebox_override("hover", hov)
+	b.add_theme_stylebox_override("pressed", flat(Color(0.75, 0.36, 0.08, 1.0), 26, Color(1.0, 0.95, 0.6, 1.0)))
 	b.add_theme_stylebox_override("disabled", flat(Color(0.3, 0.2, 0.12, 0.8), 18, Color(0.4, 0.3, 0.2, 0.6)))
 
 

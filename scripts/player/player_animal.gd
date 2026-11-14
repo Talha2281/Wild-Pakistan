@@ -42,6 +42,8 @@ var _noise_boost := 0.0
 var _noise_boost_time := 0.0
 var _look_down_time := 0.0
 var _impulse_time := 0.0
+var _lunge_target: WildlifeAI = null
+var _lunge_time := 0.0
 var _cd_emit := 0.0
 var _prev: Dictionary = {}
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -167,6 +169,8 @@ func _physics_process(delta: float) -> void:
 		var target := dir * speed
 		velocity.x = move_toward(velocity.x, target.x, 25.0 * delta)
 		velocity.z = move_toward(velocity.z, target.z, 25.0 * delta)
+	if _lunge_time > 0.0:
+		_update_lunge(delta)
 
 	if is_on_floor():
 		if jump_pressed and stats.stamina > 10.0 and not stalking:
@@ -206,6 +210,8 @@ func _physics_process(delta: float) -> void:
 
 func hurt(amount: float) -> void:
 	stats.take_damage(amount)
+	if randf() < 0.5:
+		AudioManager.animal_call(GameState.animal_id, global_position, 0.0)
 
 
 ## Slows the player (net / snare).
@@ -283,16 +289,16 @@ func _use_ability() -> void:
 					s.scare(global_position, 8.0)
 
 
-## Natural hunting: when prey (or, for herbivores, a predator) is close and in front,
-## the animal lunges by itself - no button needed.
+## Natural hunting: when prey (or, for herbivores, a predator) comes close and in
+## front, the animal leaps at it by itself, homing in, and catches it - no button.
 func _auto_hunt() -> void:
-	if attack_cd_left > 0.0 or not is_on_floor() or _impulse_time > 0.0:
+	if attack_cd_left > 0.0 or not is_on_floor() or _impulse_time > 0.0 or _lunge_time > 0.0:
 		return
 	var kind: String = cfg["attack"]
 	if kind == "tranq":
 		return
 	var fwd := -global_transform.basis.z
-	var trigger: float = float(cfg["attack_range"]) + (3.5 if kind == "pounce" else 1.2)
+	var trigger: float = 11.0 if kind == "pounce" else 6.5
 	var best: WildlifeAI = null
 	var best_d := trigger
 	for n in get_tree().get_nodes_in_group("animals"):
@@ -304,16 +310,59 @@ func _auto_hunt() -> void:
 		var to := a.global_position - global_position
 		to.y = 0.0
 		var d := to.length()
-		if d < best_d and d > 0.01 and fwd.dot(to / d) > 0.3:
+		if d < best_d and d > 0.01 and fwd.dot(to / d) > 0.1:
 			best_d = d
 			best = a
 	if best == null:
 		return
-	var tv := best.global_position - global_position
-	rotation.y = atan2(-tv.x, -tv.z)
-	_do_attack()
-	if diet != "herbivore":
-		velocity.y = maxf(velocity.y, 4.5)
+	_lunge_target = best
+	_lunge_time = 1.1
+	attack_cd_left = float(cfg["attack_cd"])
+	velocity.y = 4.2
+	AudioManager.play_3d("swipe", global_position)
+	AudioManager.animal_call(GameState.animal_id, global_position, 0.0)
+
+
+func _update_lunge(delta: float) -> void:
+	_lunge_time -= delta
+	var t := _lunge_target
+	if t == null or not is_instance_valid(t) or t.dead:
+		_lunge_time = 0.0
+		return
+	var to := t.global_position - global_position
+	to.y = 0.0
+	var d := to.length()
+	if d < 1.9:
+		_finish_lunge(t)
+		return
+	var dir := to / maxf(d, 0.01)
+	var sp := maxf(float(cfg["run"]) * 1.7, 15.0)
+	velocity.x = dir.x * sp
+	velocity.z = dir.z * sp
+	rotation.y = atan2(-dir.x, -dir.z)
+	_impulse_time = 0.15
+
+
+func _finish_lunge(t: WildlifeAI) -> void:
+	_lunge_time = 0.0
+	_impulse_time = 0.0
+	AudioManager.play_3d("hit", t.global_position)
+	var prey := diet != "herbivore" and not t.predator
+	var nm := String(t.species).replace("_", " ").capitalize()
+	if prey:
+		var food := t.meat_value
+		t.meat_value = 0.0
+		t.take_hit(999.0, self)
+		stats.eat(food)
+		SaveManager.bump_stat("kills")
+		Events.game_event.emit("hunt")
+		Events.score_popup.emit("CAUGHT %s!  +%d food" % [nm, int(food)])
+		AudioManager.play_ui("combo", -3.0)
+		AudioManager.play_3d("eat", global_position, -2.0)
+	else:
+		if t.take_hit(float(cfg["attack_dmg"]), self):
+			SaveManager.bump_stat("kills")
+		Events.toast.emit("You fought off the %s!" % nm)
 
 
 func _do_attack() -> void:

@@ -17,6 +17,17 @@ const WARM_UP := [
 	"thunder", "howl", "whistle", "dig",
 ]
 
+## Every animal in the game has its own voice: species -> [sound, pitch].
+const CALLS := {
+	"chinkara": ["snort", 1.15], "markhor": ["ram_bleat", 1.0], "ibex": ["ram_bleat", 1.15],
+	"blue_sheep": ["bleat", 1.0], "urial": ["ram_bleat", 0.9], "marco_polo": ["ram_bleat", 0.8],
+	"marmot": ["whistle", 1.0], "hare": ["hare_squeal", 1.0], "lizard": ["hiss", 1.0],
+	"desert_fox": ["fox_bark", 1.25], "red_fox": ["fox_bark", 1.0], "black_bear": ["bear_growl", 1.1],
+	"brown_bear": ["bear_growl", 0.85], "snow_leopard": ["leopard_growl", 1.0], "wild_boar": ["boar_grunt", 1.0],
+	"jackal": ["howl", 1.2], "striped_hyena": ["hyena_laugh", 1.0], "musk_deer": ["deer_cry", 1.0],
+	"indus_dolphin": ["dolphin", 1.0], "ranger": ["shikari_whistle", 1.0],
+}
+
 var _streams: Dictionary = {}
 var _pool: Array[AudioStreamPlayer3D] = []
 var _ui_pool: Array[AudioStreamPlayer] = []
@@ -188,7 +199,13 @@ func _fade(key: String, level: float, k: float) -> void:
 # ----------------------------------------------------------------- one-shots
 
 ## Play a one-shot sound at a world position.
-func play_3d(sound: String, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.06) -> void:
+func animal_call(species: String, pos: Vector3, volume_db := -2.0) -> void:
+	if CALLS.has(species):
+		var c: Array = CALLS[species]
+		play_3d(String(c[0]), pos, volume_db, 0.06, float(c[1]))
+
+
+func play_3d(sound: String, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.06, base_pitch := 1.0) -> void:
 	if sound == "":
 		return
 	var stream := _get_stream(sound)
@@ -199,7 +216,7 @@ func play_3d(sound: String, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.06
 			p.stream = stream
 			p.global_position = pos
 			p.volume_db = volume_db
-			p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+			p.pitch_scale = base_pitch + randf_range(-pitch_jitter, pitch_jitter)
 			p.play()
 			return
 

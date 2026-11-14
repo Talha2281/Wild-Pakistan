@@ -13,6 +13,10 @@ boot_splash/image="res://assets/branding/logo.png"
 boot_splash/fullsize=false
 boot_splash/show_image=true
 
+[audio]
+
+general/default_playback_type.web=0
+
 [autoload]
 
 InputSetup="*res://scripts/autoload/input_setup.gd"

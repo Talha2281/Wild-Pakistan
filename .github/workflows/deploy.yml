@@ -30,6 +30,12 @@ jobs:
           mkdir -v -p build/web/game
           godot --headless --export-release "Web" build/web/game/index.html
           cp -r landing/. build/web/
+      - name: Keep a copy of the build for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 2
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:

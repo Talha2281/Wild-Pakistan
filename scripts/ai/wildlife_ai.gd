@@ -40,6 +40,8 @@ var target_pos := Vector3.ZERO
 var hunting_player := false
 var dead := false
 
+var _startle := 0.0
+var _call_timer := 0.0
 var _duration := 3.0
 var _state_time := 0.0
 var _think_timer := 0.0
@@ -82,6 +84,7 @@ func _ready() -> void:
 	hunger = randf_range(40.0, 90.0)
 	thirst = randf_range(40.0, 90.0)
 	_think_timer = randf() * 0.3
+	_call_timer = randf_range(4.0, 14.0)
 	_set_state(State.IDLE)
 
 
@@ -93,6 +96,12 @@ func _physics_process(delta: float) -> void:
 	_hunt_cd = maxf(0.0, _hunt_cd - delta)
 	hunger = maxf(0.0, hunger - 0.35 * delta)
 	thirst = maxf(0.0, thirst - 0.45 * delta)
+
+	_call_timer -= delta
+	if _call_timer <= 0.0:
+		_call_timer = randf_range(9.0, 22.0)
+		if state != State.FLEE and _player != null and is_instance_valid(_player) and _flat_dist(_player.global_position) < 40.0:
+			AudioManager.animal_call(species, global_position, -6.0)
 
 	_think_timer -= delta
 	if _think_timer <= 0.0:
@@ -141,9 +150,10 @@ func die(killer: Node3D) -> void:
 	remove_from_group("animals")
 	remove_from_group("predators")
 	var p := killer as PlayerAnimal
-	if p != null and p.diet != "herbivore":
+	if p != null and p.diet != "herbivore" and meat_value > 0.0:
 		Carcass.spawn(get_parent(), global_position, meat_value)
 	AudioManager.play_3d("hit", global_position)
+	AudioManager.animal_call(species, global_position, 2.0)
 	queue_free()
 
 
@@ -343,6 +353,8 @@ func _set_state(s: State) -> void:
 		State.FEED:
 			_duration = 6.0
 		State.FLEE, State.HUNT:
+			if s == State.FLEE and not predator:
+				_startle = randf_range(0.25, 0.5)   # freeze and look, then bolt
 			if alert_sound != "":
 				AudioManager.play_3d(alert_sound, global_position, 2.0)
 
@@ -390,17 +402,24 @@ func _run_flee(delta: float) -> void:
 	if not _target_valid():
 		_set_state(State.IDLE)
 		return
+	if _startle > 0.0:
+		_startle -= get_physics_process_delta_time()
+		_stand(get_physics_process_delta_time())
+		if _startle <= 0.0 and is_on_floor() and not predator:
+			velocity.y = 3.2   # startle hop as it breaks into a run
+		return
 	var away := global_position - target_node.global_position
 	away.y = 0.0
 	if away.length() < 0.01:
 		away = Vector3(randf() - 0.5, 0.0, randf() - 0.5)
 	# Zig-zag so the escape looks alive, and turn home near the map edge.
-	var dir := away.normalized().rotated(Vector3.UP, sin(_state_time * 2.5) * 0.5)
+	var wob := float(get_instance_id() % 7)
+	var dir := away.normalized().rotated(Vector3.UP, sin(_state_time * 3.4 + wob) * 0.65)
 	var dest := global_position + dir * 10.0
 	var edge := GameState.half_size - 10.0
 	if absf(global_position.x) > edge or absf(global_position.z) > edge:
 		dest = home
-	_move_toward(dest, run_speed, delta)
+	_move_toward(dest, run_speed * (0.88 + 0.12 * sin(_state_time * 4.5 + wob)), delta)
 	var done_time := maxf(3.0, _min_flee)
 	if _state_time > done_time and (away.length() > vision_range * 1.1 or predator):
 		_set_state(State.IDLE)
