@@ -56,6 +56,7 @@ func player_name() -> String:
 func set_name_value(n: String) -> void:
 	rec()["name"] = n.strip_edges().left(16)
 	SaveManager.save_game()
+	publish_web()
 
 
 func xp() -> int:
@@ -173,6 +174,18 @@ func finish_run(mode: String, score: int) -> void:
 	submit("photo", int(rec().get("best_photo", 0)))
 	submit("arrests", int(rec().get("arrests", 0)))
 	SaveManager.save_game()
+	publish_web()
+
+
+## Mirrors boards + profile into the browser's localStorage so the landing page's
+## "Hall of Rangers" can show them (same site, same browser).
+func publish_web() -> void:
+	if not OS.has_feature("web"):
+		return
+	var payload := {"name": player_name(), "rank": rank_name(), "xp": xp(), "boards": SaveManager.data["boards"],
+		"history": SaveManager.data.get("history", []), "updated": int(Time.get_unix_time_from_system())}
+	var js := JSON.stringify(JSON.stringify(payload))
+	JavaScriptBridge.eval("try{localStorage.setItem('wp_hall',%s)}catch(e){}" % js)
 
 
 func submit(board: String, value: float) -> void:
@@ -187,6 +200,7 @@ func submit(board: String, value: float) -> void:
 	while list.size() > 10:
 		list.pop_back()
 	boards[board] = list
+	publish_web()
 	if online_enabled():
 		_post_score(board, value)
 

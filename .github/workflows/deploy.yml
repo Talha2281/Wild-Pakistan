@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -v -p build/web/game
           godot --headless --export-release "Web" build/web/game/index.html
-          cp landing/index.html landing/three.module.js build/web/
+          cp -r landing/. build/web/
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:

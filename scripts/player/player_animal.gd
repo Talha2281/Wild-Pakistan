@@ -141,6 +141,8 @@ func _physics_process(delta: float) -> void:
 		_use_ability()
 	if _just("attack"):
 		_do_attack()
+	else:
+		_auto_hunt()
 	if _just("photo") and cfg.get("photographer", false):
 		Photography.snap(self)
 
@@ -279,6 +281,39 @@ func _use_ability() -> void:
 				var s := n as ShikariAI
 				if s != null and global_position.distance_to(s.global_position) < 18.0:
 					s.scare(global_position, 8.0)
+
+
+## Natural hunting: when prey (or, for herbivores, a predator) is close and in front,
+## the animal lunges by itself - no button needed.
+func _auto_hunt() -> void:
+	if attack_cd_left > 0.0 or not is_on_floor() or _impulse_time > 0.0:
+		return
+	var kind: String = cfg["attack"]
+	if kind == "tranq":
+		return
+	var fwd := -global_transform.basis.z
+	var trigger: float = float(cfg["attack_range"]) + (3.5 if kind == "pounce" else 1.2)
+	var best: WildlifeAI = null
+	var best_d := trigger
+	for n in get_tree().get_nodes_in_group("animals"):
+		var a := n as WildlifeAI
+		if a == null or a.dead:
+			continue
+		if diet == "herbivore" and not a.predator:
+			continue
+		var to := a.global_position - global_position
+		to.y = 0.0
+		var d := to.length()
+		if d < best_d and d > 0.01 and fwd.dot(to / d) > 0.3:
+			best_d = d
+			best = a
+	if best == null:
+		return
+	var tv := best.global_position - global_position
+	rotation.y = atan2(-tv.x, -tv.z)
+	_do_attack()
+	if diet != "herbivore":
+		velocity.y = maxf(velocity.y, 4.5)
 
 
 func _do_attack() -> void:

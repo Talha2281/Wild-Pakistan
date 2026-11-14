@@ -43,6 +43,9 @@ var _combo_label: Label
 var _popup_label: Label
 var _popup_tween: Tween
 var _score_shown := 0.0
+var _goal_label: Label
+var _intro: Control
+var _continue_button: Button
 
 
 func _ready() -> void:
@@ -64,9 +67,11 @@ func _ready() -> void:
 	_build_ranger_info()
 	_root.add_child(GuideHint.new())
 	_build_messages()
+	_build_goal()
 	_build_touch_controls()
 	_build_pause_menu()
 	_build_game_over()
+	_build_intro()
 
 	Events.stats_changed.connect(_on_stats)
 	Events.damaged.connect(_on_damaged)
@@ -89,6 +94,9 @@ func _process(delta: float) -> void:
 	if _info_timer <= 0.0 and env != null and is_instance_valid(env):
 		_info_timer = 0.5
 		_info_label.text = env.status_text()
+		_refresh_goal()
+		if not GameState.goal_done and GameState.goal_reached() and not _game_over.visible:
+			_on_goal_done()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -279,6 +287,80 @@ func _on_popup(text: String) -> void:
 	_popup_tween.tween_property(_popup_label, "modulate:a", 0.0, 0.9).set_delay(0.25)
 
 
+func _build_goal() -> void:
+	_goal_label = UiKit.label("", 20, Color(0.6, 1.0, 0.85), true)
+	UiKit.outlined(_goal_label, 5)
+	_goal_label.anchor_right = 1.0
+	_goal_label.offset_left = 300.0
+	_goal_label.offset_right = -340.0
+	_goal_label.offset_top = 116.0
+	_goal_label.offset_bottom = 144.0
+	_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_goal_label)
+	_refresh_goal()
+
+
+func _refresh_goal() -> void:
+	if _goal_label == null:
+		return
+	var g := GameState.goal()
+	_goal_label.text = "GOAL: %s  (%d/%d)" % [g[0], mini(int(g[1]), int(g[2])), int(g[2])]
+
+
+## Start-of-run card: what this mode is about and how to win. Fades by itself.
+func _build_intro() -> void:
+	var info := {
+		"survive": ["WILD LIFE", "Live through 3 days in the wild.", "Eat, drink and stay hidden from poachers.\nFollow the arrow. Predators hunt by themselves when prey is close."],
+		"ranger": ["RANGER PATROL", "Arrest 3 poachers.", "Dart a poacher (ATTACK), then walk up to arrest him.\nTrapped animals are freed when you stand next to them."],
+		"safari": ["PHOTO SAFARI", "Take 5 wildlife photos.", "Get close to animals and press PHOTO.\nStay calm - no danger here."],
+	}
+	var d: Array = info.get(GameState.mode, info["survive"])
+	_intro = Control.new()
+	_intro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_intro)
+	_intro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var center := CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(box)
+	var panel_box := VBoxContainer.new()
+	panel_box.add_theme_constant_override("separation", 8)
+	var t := UiKit.label(String(d[0]), 46, Color(1.0, 0.9, 0.6), true)
+	UiKit.outlined(t, 9)
+	panel_box.add_child(t)
+	var g := UiKit.label(String(d[1]), 30, Color(0.6, 1.0, 0.85), true)
+	UiKit.outlined(g, 7)
+	panel_box.add_child(g)
+	var h := UiKit.label(String(d[2]), 20, Color(1, 1, 1), true)
+	UiKit.outlined(h, 5)
+	panel_box.add_child(h)
+	box.add_child(panel_box)
+	_intro.position.y = -60.0
+	_intro.modulate.a = 0.0
+	var tw := create_tween()
+	tw.tween_property(_intro, "modulate:a", 1.0, 0.5)
+	tw.tween_interval(6.0)
+	tw.tween_property(_intro, "modulate:a", 0.0, 1.0)
+	tw.tween_callback(_intro.queue_free)
+
+
+func _on_goal_done() -> void:
+	GameState.goal_done = true
+	GameState.bank_run()
+	AudioManager.play_ui("combo")
+	AudioManager.play_ui("chime")
+	_game_over_title.text = "MISSION COMPLETE!\n%s" % String(GameState.goal()[0])
+	_game_over_stats.text = "Score %d   |   +%d coins\nSaved as %s on the leaderboard" % [GameState.score, GameState.banked_coins, Records.player_name()]
+	_revive_button.visible = false
+	_continue_button.visible = true
+	_game_over.visible = true
+	get_tree().paused = true
+
+
 func _build_messages() -> void:
 	_toast_label = UiKit.label("", 24, Color(1, 1, 1), true)
 	UiKit.outlined(_toast_label, 6)
@@ -394,6 +476,11 @@ func _build_game_over() -> void:
 	box.add_child(_game_over_stats)
 	_revive_button = UiKit.button("Revive (watch a short ad)", _on_revive_pressed, Vector2(380, 64))
 	box.add_child(_revive_button)
+	_continue_button = UiKit.button("Keep exploring", func() -> void:
+		_game_over.visible = false
+		get_tree().paused = false, Vector2(380, 60))
+	_continue_button.visible = false
+	box.add_child(_continue_button)
 	var again := UiKit.button("PLAY AGAIN", func() -> void: GameState.reload_level(), Vector2(380, 80))
 	again.add_theme_font_size_override("font_size", 32)
 	again.add_theme_stylebox_override("normal", UiKit.flat(Color(0.85, 0.45, 0.12, 1.0), 16, Color(1.0, 0.85, 0.4, 1.0)))
@@ -483,6 +570,7 @@ func _on_died() -> void:
 	_game_over_stats.text = "%sScore %d   |   Best %d\nOrbs %d   |   +%d coins" % [banner, GameState.score, maxi(GameState.best_before, GameState.score), GameState.orbs, earned]
 	AudioManager.play_ui("chime")
 	_revive_button.visible = AdManager.is_available()
+	_continue_button.visible = false
 	_game_over.visible = true
 
 

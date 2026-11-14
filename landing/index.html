@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-W427ZR2S');</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wild Pakistan - The Last Wilderness</title>
@@ -87,15 +88,32 @@
   .banner { text-align:center; padding:clamp(70px,10vw,130px) 20px; background:radial-gradient(circle at 50% 0%, rgba(240,138,36,.25), transparent 60%); }
   .banner h2 { font-size:clamp(2.2rem,6vw,4rem); }
   footer { text-align:center; padding:34px 20px 50px; opacity:.7; font-size:.88rem; }
+
+  /* ---------- Hall of Rangers (live leaderboard) ---------- */
+  .hall { margin-top:26px; border-radius:22px; background:rgba(12,24,22,.6); border:1px solid rgba(255,213,138,.3); overflow:hidden; }
+  .hall-tabs { display:flex; flex-wrap:wrap; gap:8px; padding:14px; background:rgba(255,255,255,.05); }
+  .hall-tabs button { font:inherit; font-weight:700; font-size:.85rem; color:var(--ink); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:8px 16px; cursor:pointer; transition:.2s; }
+  .hall-tabs button.on, .hall-tabs button:hover { background:var(--accent); border-color:var(--accent2); }
+  .hall-me { padding:16px 22px; display:flex; flex-wrap:wrap; gap:8px 24px; align-items:center; border-bottom:1px solid rgba(255,255,255,.1); }
+  .hall-me b { font-family:Fraunces,serif; font-size:1.4rem; color:var(--accent2); }
+  .hall ol { list-style:none; padding:0; margin:0; }
+  .hall li { display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:10px; padding:13px 22px; border-bottom:1px solid rgba(255,255,255,.07); animation:rise .5s both; }
+  .hall li:nth-child(1) .rk { color:#ffd54a; } .hall li:nth-child(2) .rk { color:#d8dde3; } .hall li:nth-child(3) .rk { color:#d9915b; }
+  .hall .rk { font-family:Fraunces,serif; font-size:1.3rem; font-weight:800; }
+  .hall .v { font-weight:800; color:var(--accent2); }
+  .hall .empty { padding:34px 22px; text-align:center; opacity:.8; }
+  .hall .live { display:inline-block; width:9px; height:9px; border-radius:50%; background:#5fe39b; margin-right:8px; box-shadow:0 0 10px #5fe39b; animation:pulse 1.6s infinite; }
+  @keyframes rise { from { opacity:0; transform:translateY(10px); } }
   @media (prefers-reduced-motion:reduce){ .cta,#hint{animation:none} .reveal{opacity:1;transform:none} html{scroll-behavior:auto} }
 </style>
 </head>
 <body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W427ZR2S" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <canvas id="scene"></canvas>
 <div id="shade"></div>
 <div id="bar"></div>
 <div id="top"><b><img src="logo.png" alt="" width="34" height="34" style="vertical-align:middle;border-radius:50%;margin-right:10px">WILD PAKISTAN</b>
-  <nav><a href="#about">About</a><a href="#modes">Modes</a><a href="#wildlife">Wildlife</a><a href="#protect">Protect</a><a class="play" href="game/">PLAY FREE</a></nav></div>
+  <nav><a href="#about">About</a><a href="#modes">Modes</a><a href="#wildlife">Wildlife</a><a href="#protect">Protect</a><a href="#hall">Leaderboard</a><a class="play" href="game/">PLAY FREE</a></nav></div>
 <div id="hint">SCROLL TO EXPLORE</div>
 <div id="track"></div>
 
@@ -188,6 +206,17 @@
       <div class="stat reveal"><b>1</b><span>national animal brought back by community conservation: the markhor</span></div>
     </div>
     <p class="reveal" style="margin-top:22px;opacity:.75;font-size:.9rem">Figures are approximate and change as surveys are updated. If you see wildlife crime, report it to your provincial wildlife department. Never buy skins, horns or wild pets.</p>
+  </section>
+
+  <section class="block" id="hall">
+    <div class="eyebrow reveal">Leaderboard</div>
+    <h2 class="reveal">Hall of Rangers</h2>
+    <p class="reveal">Scores are saved with your player name and update live while you play.</p>
+    <div class="hall reveal">
+      <div class="hall-tabs" id="hallTabs"></div>
+      <div class="hall-me" id="hallMe"></div>
+      <ol id="hallList"></ol>
+    </div>
   </section>
 
   <section class="block" id="how">
@@ -447,6 +476,27 @@ sp.innerHTML = SP.map(([n,cl,label,fact,col])=>`<div class="sp reveal"><i style=
 // ---- reveal on scroll
 const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.12});
 document.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transitionDelay = ((i%4)*70)+'ms'; io.observe(el); });
+
+// ---- Hall of Rangers: reads the records the game saves in this browser, live
+(function(){
+  const BOARDS={survival:['Wild Life','pts'],ranger:['Ranger Patrol','pts'],arrests:['Arrests','arrests'],discoveries:['Species found','species'],photo:['Best photo','pts'],rescue:['Fastest rescue','sec']};
+  let cur='survival', last='';
+  const tabs=document.getElementById('hallTabs'), me=document.getElementById('hallMe'), list=document.getElementById('hallList');
+  if(!tabs) return;
+  Object.keys(BOARDS).forEach(k=>{const b=document.createElement('button');b.textContent=BOARDS[k][0];b.dataset.k=k;b.onclick=()=>{cur=k;last='';draw();};tabs.appendChild(b);});
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function draw(){
+    let raw=null; try{raw=localStorage.getItem('wp_hall');}catch(e){}
+    if(raw===last && tabs.dataset.k===cur) return; last=raw; tabs.dataset.k=cur;
+    tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===cur));
+    let d=null; try{d=JSON.parse(raw);}catch(e){}
+    if(!d){me.innerHTML='<span><span class="live"></span>Waiting for your first run</span>';list.innerHTML='<li class="empty" style="display:block">No scores yet. <a href="game/" style="color:var(--accent2)">Play a round</a> and your name appears here.</li>';return;}
+    me.innerHTML='<span><span class="live"></span>Live</span><b>'+esc(d.name)+'</b><span>'+esc(d.rank)+' &middot; '+(d.xp|0)+' XP</span>';
+    const rows=(d.boards&&d.boards[cur])||[];
+    list.innerHTML=rows.length?rows.map((r,i)=>'<li style="animation-delay:'+i*60+'ms"><span class="rk">'+(i+1)+'</span><span>'+esc(r.name)+'</span><span class="v">'+r.value+' '+BOARDS[cur][1]+'</span></li>').join(''):'<li class="empty" style="display:block">No scores on this board yet.</li>';
+  }
+  draw(); setInterval(draw,1500); addEventListener('storage',draw);
+})();
 </script>
 </body>
 </html>

@@ -63,14 +63,25 @@ static func animate(root: Node3D, speed_ratio: float, delta: float, air := false
 		if not leg.has_meta("base_y"):
 			leg.set_meta("base_y", leg.position.y)
 		var front := n.begins_with("LegF")
-		var left := n in ["LegFL", "LegBL", "LegL"]
-		# walk: diagonal pairs. run: front legs together, back legs together (bound).
-		var walk_off := 0.0 if n in ["LegFL", "LegBR", "LegL"] else PI
-		var bound_off := 0.0 if front else 0.9
-		var off := lerpf(walk_off, bound_off + (0.25 if left else 0.0), run)
-		var sw := sin(phase + off)
+		var sw: float
+		if human:
+			sw = sin(phase + (0.0 if n == "LegL" else PI))
+		else:
+			# Real quadruped gaits: 4-beat lateral walk, diagonal trot, rotary gallop.
+			var wo := 0.0
+			var to := 0.0
+			var go := 0.0
+			match n:
+				"LegBL": wo = 0.0; to = PI; go = 2.9
+				"LegFL": wo = PI * 0.5; to = 0.0; go = 0.5
+				"LegBR": wo = PI; to = 0.0; go = 3.2
+				"LegFR": wo = PI * 1.5; to = PI; go = 0.0
+			var w_walk := clampf((0.42 - speed_ratio) / 0.15, 0.0, 1.0)
+			var w_gal := clampf((speed_ratio - 0.62) / 0.2, 0.0, 1.0)
+			var w_trot := maxf(0.0, 1.0 - w_walk - w_gal)
+			sw = sin(phase + wo) * w_walk + sin(phase + to) * w_trot + sin(phase + go) * w_gal
 		var target := sw * amp
-		var lift := maxf(0.0, cos(phase + off)) * 0.12 * (0.4 + speed_ratio) if moving else 0.0
+		var lift := maxf(0.0, -sw) * 0.12 * (0.4 + speed_ratio) if moving else 0.0
 		if air:
 			target = -0.85 if front else 0.75
 			lift = 0.0

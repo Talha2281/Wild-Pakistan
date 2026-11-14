@@ -40,11 +40,18 @@ var _combo_left := 0.0
 var _next_milestone := 500
 var banked_coins := 0
 var _banked := false
+var run_arrests := 0
+var run_photos := 0
+var goal_done := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	Events.game_event.connect(func(e: String) -> void:
+		if e == "arrest":
+			run_arrests += 1
+		elif e == "photo":
+			run_photos += 1
 		if POINTS.has(e):
 			add_score(int(POINTS[e]), e.replace("_", " ")))
 
@@ -71,6 +78,9 @@ func reset_run() -> void:
 	banked_coins = 0
 	poached = 0
 	fail_reason = ""
+	run_arrests = 0
+	run_photos = 0
+	goal_done = false
 	best_before = int(SaveManager.data["stats"].get("best_score", 0))
 	Events.score_changed.emit(score, combo)
 
@@ -90,6 +100,27 @@ func add_score(points: int, label := "") -> void:
 		Events.toast.emit("Score %d! Bonus +10 coins" % (_next_milestone - 500))
 
 
+## Current run goal: [text, progress, target]. Reaching it ends the run with a win screen.
+func goal() -> Array:
+	match mode:
+		"ranger":
+			return ["Arrest 3 poachers", run_arrests, 3]
+		"safari":
+			return ["Take 5 wildlife photos", run_photos, 5]
+	return ["Survive 3 days", days_survived, 3]
+
+
+func goal_reached() -> bool:
+	var g := goal()
+	return int(g[1]) >= int(g[2])
+
+
+## Sends an event to Google Tag Manager (web only; harmless elsewhere).
+func track(event_name: String, extra := "") -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'%s',wp_info:'%s'});" % [event_name, extra.replace("'", "")])
+
+
 ## Converts the run into coins and the best-score stat. Safe to call repeatedly.
 func bank_run() -> int:
 	if _banked:
@@ -97,6 +128,7 @@ func bank_run() -> int:
 	_banked = true
 	SaveManager.set_stat_max("best_score", score)
 	Records.finish_run(mode, score)
+	track("wp_run_end", "%s|%d" % [mode, score])
 	banked_coins = score / 25
 	if banked_coins > 0:
 		SaveManager.add_coins(banked_coins)
@@ -113,6 +145,7 @@ func start_game(animal: String, biome: String, play_mode := "survive") -> void:
 		SaveManager.data["last_animal"] = animal
 	SaveManager.data["last_biome"] = biome
 	SaveManager.save_game()
+	track("wp_start", "%s|%s|%s" % [play_mode, animal, biome])
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 

@@ -222,11 +222,9 @@ func _show_select() -> void:
 	body.add_child(scroll)
 
 	info.add_child(UiKit.label(cfg["name"], 34, Color(1.0, 0.93, 0.75)))
-	info.add_child(UiKit.label(String(cfg["status"]), 16, Color(0.8, 0.85, 0.75)))
+	info.add_child(UiKit.label("%s  |  %s" % [String(cfg["status"]), String(cfg["diet"]).capitalize()], 16, Color(0.8, 0.85, 0.75)))
 	info.add_child(UiKit.label(cfg["desc"], 20))
-	info.add_child(UiKit.label("Diet: %s   Speed: %.0f   Health: %.0f   Climb: %d deg" % [String(cfg["diet"]).capitalize(), cfg["run"], cfg["max_health"], int(cfg["climb_angle"])], 18, Color(0.85, 0.95, 0.8)))
-	info.add_child(UiKit.label("Ability - %s: %s" % [cfg["ability_name"], cfg["ability_desc"]], 18))
-	info.add_child(UiKit.label("Attack - %s" % cfg["attack_name"], 18))
+	info.add_child(UiKit.label("Special: %s" % cfg["ability_name"], 18, Color(0.85, 0.95, 0.8)))
 	
 	if not locked:
 		info.add_child(UiKit.label("Coat", 20, Color(1.0, 0.88, 0.4)))
