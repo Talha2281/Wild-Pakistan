@@ -44,6 +44,7 @@ var _popup_label: Label
 var _popup_tween: Tween
 var _score_shown := 0.0
 var _goal_label: Label
+var _guide: Control
 var _intro: Control
 var _continue_button: Button
 
@@ -65,7 +66,8 @@ func _ready() -> void:
 	_build_top_right()
 	_build_score()
 	_build_ranger_info()
-	_root.add_child(GuideHint.new())
+	_guide = GuideHint.new()
+	_root.add_child(_guide)
 	_build_messages()
 	_build_goal()
 	_build_touch_controls()
@@ -310,7 +312,7 @@ func _refresh_goal() -> void:
 ## Start-of-run card: what this mode is about and how to win. Fades by itself.
 func _build_intro() -> void:
 	var info := {
-		"survive": ["WILD LIFE", "Live through 3 days in the wild.", "Eat, drink and stay hidden from poachers.\nFollow the arrow. Predators hunt by themselves when prey is close."],
+		"survive": ["WILD LIFE", "Live through 3 days in the wild.", "Eat, drink, stay hidden from poachers.\nFollow the arrow."],
 		"ranger": ["RANGER PATROL", "Arrest 3 poachers.", "Dart a poacher (ATTACK), then walk up to arrest him.\nTrapped animals are freed when you stand next to them."],
 		"safari": ["PHOTO SAFARI", "Take 5 wildlife photos.", "Get close to animals and press PHOTO.\nStay calm - no danger here."],
 	}
@@ -340,12 +342,15 @@ func _build_intro() -> void:
 	panel_box.add_child(h)
 	box.add_child(panel_box)
 	_intro.position.y = -60.0
+	_guide.visible = false
 	_intro.modulate.a = 0.0
 	var tw := create_tween()
 	tw.tween_property(_intro, "modulate:a", 1.0, 0.5)
 	tw.tween_interval(6.0)
 	tw.tween_property(_intro, "modulate:a", 0.0, 1.0)
-	tw.tween_callback(_intro.queue_free)
+	tw.tween_callback(func() -> void:
+		_guide.visible = true
+		_intro.queue_free())
 
 
 func _on_goal_done() -> void:
