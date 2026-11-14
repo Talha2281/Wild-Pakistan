@@ -76,6 +76,7 @@ func _ready() -> void:
 	cs.shape = capsule
 	cs.position.y = cap.y * 0.5
 	add_child(cs)
+	set_meta("sep_r", cap.x)
 
 	_visual = AnimalModel.build(species)
 	add_child(_visual)
@@ -111,6 +112,9 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
+	var sep := Separation.push(self, float(get_meta("sep_r", 0.5)), get_tree())
+	velocity.x += sep.x * 16.0 * delta * 10.0
+	velocity.z += sep.z * 16.0 * delta * 10.0
 	move_and_slide()
 
 	var limit := GameState.half_size - 4.0

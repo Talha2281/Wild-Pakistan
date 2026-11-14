@@ -76,7 +76,7 @@ const DB := {
 	"brown_bear": {
 		"name": "Himalayan Brown Bear", "latin": "Ursus arctos isabellinus", "status": "Critically endangered in Pakistan",
 		"diet": "omnivore", "predator": true,
-		"habitats": ["northern", "ziarat", "deosai"], "unlock_missions": 0,
+		"habitats": ["deosai", "northern", "ziarat"], "unlock_missions": 0,
 		"max_health": 160.0, "walk": 4.2, "run": 9.0, "jump": 5.2,
 		"stamina_drain": 22.0, "hunger_rate": 0.6, "thirst_rate": 0.6,
 		"comfort": [-30.0, 28.0], "climb_angle": 50.0,

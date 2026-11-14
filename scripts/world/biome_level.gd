@@ -16,6 +16,7 @@ var env: EnvironmentController
 var hud: HUD
 
 var _rng := RandomNumberGenerator.new()
+var _start := Vector2.ZERO
 var _plan: Dictionary = {}
 var _targets: Dictionary = {}
 var _danger := 0.0
@@ -26,12 +27,15 @@ var _shikari_count := 0
 
 
 func _ready() -> void:
-	cfg = Biomes.DB[GameState.biome_id]
+	# Every run gets a brand-new landscape: new terrain seed, new start point,
+	# new water, food, camps and traps.
+	cfg = (Biomes.DB[GameState.biome_id] as Dictionary).duplicate(true)
+	cfg["seed"] = int(Time.get_ticks_usec() % 900000) + 100
 	GameState.half_size = float(cfg["size"]) * 0.5
 	GameState.step_sound = cfg["step"]
 	GameState.visibility_mult = 1.0
 	GameState.track_life_mult = 1.0
-	_rng.seed = int(cfg["seed"])
+	_rng.seed = int(cfg["seed"]) * 7919 + randi()
 	_apply_quality()
 
 	_build_terrain()
@@ -114,7 +118,8 @@ func _build_terrain() -> void:
 	_plan["hide"] = _scatter_points(int(cfg["hide_count"]), 10.0, 0.7, 8.0)
 	_plan["dig"] = _scatter_points(int(cfg["dig_spots"]), 10.0, 0.7, 14.0)
 
-	terrain.add_flat_zone(Vector2.ZERO, 5.0)
+	_start = terrain.random_point(_rng, 26.0, 0.3)
+	terrain.add_flat_zone(_start, 5.0)
 	for p in _plan["water"]:
 		terrain.add_flat_zone(p, 4.0)
 	for p in _plan["snares"]:
@@ -139,7 +144,7 @@ func _camp_point() -> Vector2:
 	var p := Vector2(50.0, 20.0)
 	for i in 40:
 		p = terrain.random_point(_rng, 26.0, 0.5)
-		if p.length() > 42.0 and p.length() < 85.0:
+		if (p - _start).length() > 42.0 and (p - _start).length() < 85.0:
 			break
 	return p
 
@@ -149,7 +154,7 @@ func _scatter_points(count: int, margin: float, max_slope: float, min_origin: fl
 	for i in count:
 		var p := terrain.random_point(_rng, margin, max_slope)
 		for tries in 20:
-			if p.length() >= min_origin:
+			if (p - _start).length() >= min_origin:
 				break
 			p = terrain.random_point(_rng, margin, max_slope)
 		out.append(p)
@@ -248,7 +253,7 @@ func _spawn_player() -> void:
 	player = PlayerAnimal.new()
 	player.species_id = GameState.animal_id
 	player.skin_index = SaveManager.equipped_skin(GameState.animal_id)
-	player.position = terrain.ground(Vector2.ZERO, 1.0)
+	player.position = terrain.ground(_start, 1.0)
 	add_child(player)
 
 	var h: float = AnimalModel.body_height(GameState.animal_id)
@@ -298,7 +303,7 @@ func _spawn_dolphins() -> void:
 func _far_point(min_dist: float) -> Vector2:
 	var p := terrain.random_point(_rng, 12.0, 0.7)
 	for i in 20:
-		if p.length() >= min_dist:
+		if (p - _start).length() >= min_dist:
 			break
 		p = terrain.random_point(_rng, 12.0, 0.7)
 	return p
@@ -346,7 +351,7 @@ func _spawn_orbs(count: int) -> void:
 		if i < near_origin and _orb_count() == i:
 			# A trail of orbs right next to the start so the first seconds pay off.
 			var ang := float(i) / near_origin * TAU
-			p = Vector2(cos(ang), sin(ang)) * (9.0 + 2.0 * float(i % 3))
+			p = _start + Vector2(cos(ang), sin(ang)) * (9.0 + 2.0 * float(i % 3))
 		else:
 			p = terrain.random_point(_rng, 8.0, 0.8)
 		var orb := SpiritOrb.new()

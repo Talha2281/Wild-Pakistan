@@ -64,6 +64,7 @@ func _ready() -> void:
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = cap.x
+	set_meta("sep_r", cap.x)
 	capsule.height = cap.y
 	shape.shape = capsule
 	shape.position.y = cap.y * 0.5
@@ -180,6 +181,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y -= _gravity * delta
 
+	var sep := Separation.push(self, float(get_meta("sep_r", 0.5)), get_tree(), _lunge_target if _lunge_time > 0.0 else null)
+	velocity.x += sep.x * 160.0 * delta
+	velocity.z += sep.z * 160.0 * delta
 	var flat_speed := Vector2(velocity.x, velocity.z).length()
 	if flat_speed > 0.5:
 		rotation.y = lerp_angle(rotation.y, atan2(-velocity.x, -velocity.z), 9.0 * delta)

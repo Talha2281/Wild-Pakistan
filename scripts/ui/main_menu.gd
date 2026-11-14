@@ -768,6 +768,8 @@ func _go(animal: String, biome: String, mode: String) -> void:
 
 func _pick_animal(id: String) -> void:
 	_sel_animal = id
+	# Every animal starts in its own home habitat (you can still change it below).
+	_sel_biome = String((Animals.DB[id]["habitats"] as Array)[0])
 	_sel_skin = SaveManager.equipped_skin(id)
 	_show_select()
 
