@@ -30,6 +30,7 @@ func _run() -> void:
 				await _test_level(biome, animal, "survive")
 		await _test_level(biome, "ranger", "ranger")
 		await _test_level(biome, "ranger", "safari")
+	await _test_hunt()
 	print("SMOKE TEST FINISHED  failures=%d" % failures)
 	get_tree().quit(1 if failures > 0 else 0)
 
@@ -55,7 +56,7 @@ func _check_sounds() -> void:
 	var names := ["amb_desert", "amb_forest", "amb_mountain", "wind", "rain", "night", "heartbeat",
 		"step_sand", "step_grass", "step_snow", "step_human", "drink", "eat", "dig", "jump", "swipe",
 		"hit", "trap_snap", "gunshot", "thunder", "roar", "bear_growl", "leopard_growl", "howl",
-		"snort", "fox_bark", "bleat", "whistle", "shikari_shout", "shikari_whistle", "chime",
+		"snort", "fox_bark", "bleat", "ram_bleat", "boar_grunt", "hyena_laugh", "hiss", "hare_squeal", "deer_cry", "dolphin", "whistle", "shikari_shout", "shikari_whistle", "chime",
 		"click", "bird", "chirp_a", "chirp_b", "cuckoo", "owl", "cricket", "frog", "eagle", "crow", "splash", "music_menu", "music_game", "orb", "combo"]
 	for n in names:
 		var s := SynthAudio.make(n)
@@ -172,3 +173,38 @@ func _exercise_environment(env: EnvironmentController) -> void:
 	if env.day != 1:
 		_fail("day did not advance")
 	print("environment ok: %s" % env.status_text())
+
+
+## A snow leopard must catch a hare by itself when it walks near it.
+func _test_hunt() -> void:
+	print("--- hunt test")
+	_gs.mode = "survive"
+	_gs.animal_id = "snow_leopard"
+	_gs.biome_id = "northern"
+	var level: Node = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	get_tree().root.add_child(level)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var player := _gs.player as PlayerAnimal
+	if player == null:
+		_fail("hunt: no player")
+		return
+	var hare := Species.create("hare")
+	var fwd := -player.global_transform.basis.z
+	hare.position = player.global_position + fwd * 6.0
+	level.add_child(hare)
+	var fed_before := player.stats.hunger
+	player.stats.hunger = 30.0
+	fed_before = player.stats.hunger
+	var caught := false
+	for i in 300:
+		await get_tree().physics_frame
+		if not is_instance_valid(hare) or hare.dead:
+			caught = true
+			break
+	print("hunt: caught=%s hunger %.0f -> %.0f" % [caught, fed_before, player.stats.hunger])
+	if not caught:
+		_fail("hunt: leopard did not catch the hare on its own")
+	level.queue_free()
+	await get_tree().process_frame
+	_gs.terrain = null
